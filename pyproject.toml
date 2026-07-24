@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tft_set_info_tools"
+version = "0.1.0"
+description = "Shared tools for working with TFT set info across my Python projects."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Colleen Nelson", email = "colleenfnelson@gmail.com" },
+]
+dependencies = [
+    "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+gcp = [
+    "google-cloud-storage>=2",
+]
+all = [
+    "tft_set_info_tools[gcp]",
+]
+dev = [
+    "pytest>=8",
+    "build>=1",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+tft_set_info_tools = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
