@@ -27,7 +27,8 @@ class DefaultDataSource(TFTDataSource):
     constructor raises ValueError) or fails to read (network error, missing
     file, malformed response, etc.), and caches whichever source works. (This
     only ever happens once per instance — TFTDataSource.read() caches the
-    returned data across calls, so _read() below won't run again.)
+    returned data across calls, so _read() below won't run again unless
+    force=True is passed, which re-runs the whole fallback search.)
 
     write() is not supported, since there's no single unambiguous backend to
     write to across an ordered list of sources.
@@ -45,6 +46,10 @@ class DefaultDataSource(TFTDataSource):
         self._resolved: TFTDataSource | None = None
 
     def _read(self) -> dict:
+        if self._resolved is not None:
+            self._resolved.__exit__(None, None, None)
+            self._resolved = None
+
         errors = []
         for name in self._names:
             cls = REGISTRY.get(name)

@@ -10,17 +10,18 @@ class TFTDataSource(ABC):
     """Interface for reading/writing TFT metadata json from/to a source.
 
     read() caches its result the first time it succeeds; subsequent calls
-    return the cached data without re-fetching. write() updates the cache to
-    the data just written, so a following read() reflects it without
-    re-fetching from the source. Concrete subclasses implement the actual
-    I/O in _read()/_write() rather than overriding read()/write() directly.
+    return the cached data without re-fetching, unless force=True is passed.
+    write() updates the cache to the data just written, so a following
+    read() reflects it without re-fetching from the source. Concrete
+    subclasses implement the actual I/O in _read()/_write() rather than
+    overriding read()/write() directly.
     """
 
     def __init__(self):
         self._cache: dict | None = None
 
-    def read(self) -> dict:
-        if self._cache is None:
+    def read(self, force: bool = False) -> dict:
+        if force or self._cache is None:
             self._cache = self._read()
         return self._cache
 

@@ -94,6 +94,39 @@ def test_read_is_cached_after_first_call(monkeypatch, tmp_path):
     assert second == {"n": 1}
 
 
+def test_read_force_reruns_fallback_search_and_closes_prior_source(monkeypatch, tmp_path):
+    payload = {"items": []}
+
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return payload
+
+    class FakeClient:
+        closed = False
+
+        def get(self, url):
+            return FakeResponse()
+
+        def close(self):
+            self.closed = True
+
+    monkeypatch.setattr("httpx.Client", FakeClient)
+    monkeypatch.setenv("TFT_DATASOURCE_ORDER", "cdragon")
+
+    source = DefaultDataSource()
+    source.read()
+    first_resolved = source._resolved
+    first_client = first_resolved._client
+
+    source.read(force=True)
+
+    assert first_client.closed
+    assert source._resolved is not first_resolved
+
+
 def test_write_is_not_supported():
     with pytest.raises(NotImplementedError):
         DefaultDataSource().write({"champions": []})

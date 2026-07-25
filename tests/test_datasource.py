@@ -41,6 +41,22 @@ def test_read_caches_after_first_call(tmp_path):
     assert second == {"n": 1}
 
 
+def test_read_force_bypasses_cache(tmp_path):
+    path = tmp_path / "data.json"
+    path.write_text(json.dumps({"n": 1}), encoding="utf-8")
+
+    source = LocalDataSource(path)
+    first = source.read()
+
+    path.write_text(json.dumps({"n": 2}), encoding="utf-8")
+    forced = source.read(force=True)
+    cached_again = source.read()
+
+    assert first == {"n": 1}
+    assert forced == {"n": 2}
+    assert cached_again == {"n": 2}
+
+
 def test_write_updates_cache_to_written_data(tmp_path):
     path = tmp_path / "data.json"
     path.write_text(json.dumps({"n": 1}), encoding="utf-8")
