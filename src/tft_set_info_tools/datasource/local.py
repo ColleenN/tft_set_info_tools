@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from types import TracebackType
 
@@ -10,9 +11,20 @@ from tft_set_info_tools.datasource.base import TFTDataSource
 
 
 class LocalDataSource(TFTDataSource):
-    """Reads/writes TFT metadata json from/to a local file."""
+    """Reads/writes TFT metadata json from/to a local file.
 
-    def __init__(self, path: str | Path):
+    ``path`` falls back to the ``TFT_LOCAL_PATH`` environment variable when
+    not passed explicitly, so this class can be zero-arg constructed.
+    """
+
+    PATH_ENV_VAR = "TFT_LOCAL_PATH"
+
+    def __init__(self, path: str | Path | None = None):
+        path = path or os.environ.get(self.PATH_ENV_VAR)
+        if not path:
+            raise ValueError(
+                f"Local file path not specified; pass path= or set {self.PATH_ENV_VAR}"
+            )
         self._path = Path(path)
 
     def read(self) -> dict:

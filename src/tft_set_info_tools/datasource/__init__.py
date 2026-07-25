@@ -2,6 +2,7 @@
 
 from tft_set_info_tools.datasource.base import TFTDataSource
 from tft_set_info_tools.datasource.cdragon import CDragonDataSource
+from tft_set_info_tools.datasource.default import DefaultDataSource
 from tft_set_info_tools.datasource.gcp import GCPDataSource
 from tft_set_info_tools.datasource.local import LocalDataSource
 
@@ -10,4 +11,5 @@ __all__ = [
     "LocalDataSource",
     "GCPDataSource",
     "CDragonDataSource",
+    "DefaultDataSource",
 ]
