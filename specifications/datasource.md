@@ -3,6 +3,7 @@
 A module that provides classes for retrieving TFT metadata json from a particular source.
 
 `TFTDataSource`: Main abstract parent base class. Defines the interface for retrieving TFT metadata json. Implements python's context manager protocol to ensure proper resource management.
+
 Methods:
 * `def read() -> dict`: Abstract method to read TFT metadata json from the source. Returns a dictionary containing the metadata.
 * `def write(data: dict|TFTDataSource) -> None`: Abstract method to write TFT metadata json to the source.
