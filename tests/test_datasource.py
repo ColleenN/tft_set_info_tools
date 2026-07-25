@@ -27,6 +27,34 @@ def test_local_data_source_round_trip(tmp_path):
         assert source.read() == payload
 
 
+def test_read_caches_after_first_call(tmp_path):
+    path = tmp_path / "data.json"
+    path.write_text(json.dumps({"n": 1}), encoding="utf-8")
+
+    source = LocalDataSource(path)
+    first = source.read()
+
+    path.write_text(json.dumps({"n": 2}), encoding="utf-8")
+    second = source.read()
+
+    assert first == {"n": 1}
+    assert second == {"n": 1}
+
+
+def test_write_updates_cache_to_written_data(tmp_path):
+    path = tmp_path / "data.json"
+    path.write_text(json.dumps({"n": 1}), encoding="utf-8")
+
+    source = LocalDataSource(path)
+    source.read()
+    source.write({"n": 2})
+    path.unlink()
+
+    # read() must return the cached value from write(), not hit the (now
+    # missing) file again.
+    assert source.read() == {"n": 2}
+
+
 def test_local_data_source_write_from_other_source(tmp_path):
     src_path = tmp_path / "src.json"
     dst_path = tmp_path / "dst.json"
@@ -36,6 +64,21 @@ def test_local_data_source_write_from_other_source(tmp_path):
     LocalDataSource(dst_path).write(LocalDataSource(src_path))
 
     assert json.loads(dst_path.read_text(encoding="utf-8")) == payload
+
+
+def test_write_from_other_source_caches_the_resolved_dict(tmp_path):
+    src_path = tmp_path / "src.json"
+    dst_path = tmp_path / "dst.json"
+    payload = {"traits": ["Chrono"]}
+    src_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    dst = LocalDataSource(dst_path)
+    dst.write(LocalDataSource(src_path))
+    dst_path.unlink()
+
+    # write()'s cache must hold the resolved dict, not the source object,
+    # so read() works even though the destination file is now gone.
+    assert dst.read() == payload
 
 
 def test_gcp_data_source_requires_bucket_and_blob_path(monkeypatch):

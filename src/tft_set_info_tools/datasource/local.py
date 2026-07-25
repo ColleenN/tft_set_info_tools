@@ -20,6 +20,7 @@ class LocalDataSource(TFTDataSource):
     PATH_ENV_VAR = "TFT_LOCAL_PATH"
 
     def __init__(self, path: str | Path | None = None):
+        super().__init__()
         path = path or os.environ.get(self.PATH_ENV_VAR)
         if not path:
             raise ValueError(
@@ -27,14 +28,13 @@ class LocalDataSource(TFTDataSource):
             )
         self._path = Path(path)
 
-    def read(self) -> dict:
+    def _read(self) -> dict:
         with self._path.open(encoding="utf-8") as f:
             return json.load(f)
 
-    def write(self, data: dict | TFTDataSource) -> None:
-        payload = self._resolve(data)
+    def _write(self, data: dict) -> None:
         with self._path.open("w", encoding="utf-8") as f:
-            json.dump(payload, f)
+            json.dump(data, f)
 
     def __enter__(self) -> LocalDataSource:
         return self

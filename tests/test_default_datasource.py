@@ -16,20 +16,14 @@ def clear_datasource_env(monkeypatch):
         monkeypatch.delenv(var, raising=False)
 
 
-def test_requires_an_order():
+def test_defaults_to_gcp_cdragon_local_when_env_var_unset():
+    assert DefaultDataSource()._names == ["gcp", "cdragon", "local"]
+
+
+def test_raises_when_order_env_var_explicitly_empty(monkeypatch):
+    monkeypatch.setenv("TFT_DATASOURCE_ORDER", "")
     with pytest.raises(ValueError):
         DefaultDataSource()
-
-
-def test_order_can_be_passed_explicitly(monkeypatch, tmp_path):
-    path = tmp_path / "data.json"
-    payload = {"champions": []}
-    path.write_text(json.dumps(payload), encoding="utf-8")
-    monkeypatch.setenv("TFT_LOCAL_PATH", str(path))
-
-    source = DefaultDataSource(order="local")
-
-    assert source.read() == payload
 
 
 def test_falls_back_past_unconfigured_source(monkeypatch, tmp_path):
@@ -84,40 +78,28 @@ def test_raises_on_unknown_name(monkeypatch):
         DefaultDataSource().read()
 
 
-def test_caches_resolved_source_across_read_calls(monkeypatch, tmp_path):
+def test_read_is_cached_after_first_call(monkeypatch, tmp_path):
     path = tmp_path / "data.json"
     path.write_text(json.dumps({"n": 1}), encoding="utf-8")
     monkeypatch.setenv("TFT_DATASOURCE_ORDER", "local")
     monkeypatch.setenv("TFT_LOCAL_PATH", str(path))
 
     source = DefaultDataSource()
-    source.read()
-    resolved_after_first_read = source._resolved
+    first = source.read()
 
     path.write_text(json.dumps({"n": 2}), encoding="utf-8")
-    source.read()
+    second = source.read()
 
-    assert source._resolved is resolved_after_first_read
-
-
-def test_write_delegates_to_first_configured_source(monkeypatch, tmp_path):
-    path = tmp_path / "data.json"
-    monkeypatch.setenv("TFT_DATASOURCE_ORDER", "gcp,local")
-    monkeypatch.setenv("TFT_LOCAL_PATH", str(path))
-
-    DefaultDataSource().write({"champions": ["Ahri"]})
-
-    assert json.loads(path.read_text(encoding="utf-8")) == {"champions": ["Ahri"]}
+    assert first == {"n": 1}
+    assert second == {"n": 1}
 
 
-def test_write_does_not_fall_back_on_write_failure(monkeypatch):
-    monkeypatch.setenv("TFT_DATASOURCE_ORDER", "cdragon,local")
-
+def test_write_is_not_supported():
     with pytest.raises(NotImplementedError):
         DefaultDataSource().write({"champions": []})
 
 
-def test_context_manager_closes_resolved_source(monkeypatch, tmp_path):
+def test_context_manager_closes_resolved_source(monkeypatch):
     payload = {"items": []}
 
     class FakeResponse:

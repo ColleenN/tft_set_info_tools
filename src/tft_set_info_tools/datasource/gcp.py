@@ -22,6 +22,7 @@ class GCPDataSource(TFTDataSource):
     PROJECT_ENV_VAR = "TFT_GCP_PROJECT"
 
     def __init__(self, bucket: str | None = None, blob_path: str | None = None):
+        super().__init__()
         self._bucket_name = bucket or os.environ.get(self.BUCKET_ENV_VAR)
         self._blob_path = blob_path or os.environ.get(self.BLOB_PATH_ENV_VAR)
         if not self._bucket_name:
@@ -52,13 +53,12 @@ class GCPDataSource(TFTDataSource):
         bucket = self._get_client().bucket(self._bucket_name)
         return bucket.blob(self._blob_path)
 
-    def read(self) -> dict:
+    def _read(self) -> dict:
         return json.loads(self._get_blob().download_as_text())
 
-    def write(self, data: dict | TFTDataSource) -> None:
-        payload = self._resolve(data)
+    def _write(self, data: dict) -> None:
         self._get_blob().upload_from_string(
-            json.dumps(payload), content_type="application/json"
+            json.dumps(data), content_type="application/json"
         )
 
     def __enter__(self) -> GCPDataSource:

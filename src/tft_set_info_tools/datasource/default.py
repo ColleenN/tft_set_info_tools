@@ -1,4 +1,4 @@
-"""A TFTDataSource that delegates to the first working source in a priority order."""
+"""A read-only TFTDataSource that reads from the first working source in a priority order."""
 
 from __future__ import annotations
 
@@ -18,35 +18,33 @@ REGISTRY: dict[str, type[TFTDataSource]] = {
 
 
 class DefaultDataSource(TFTDataSource):
-    """Reads/writes via the first working source named in a priority order.
+    """Reads via the first working source named in a priority order.
 
     Order is a comma-separated list of registry names (e.g. "local,gcp,cdragon"),
-    taken from the ``order`` argument or the TFT_DATASOURCE_ORDER env var.
+    taken from the TFT_DATASOURCE_ORDER env var (defaults to "gcp,cdragon,local").
 
     read() tries each name in turn, skipping one that's unconfigured (its
     constructor raises ValueError) or fails to read (network error, missing
-    file, malformed response, etc.), and caches whichever source works so
-    later read()/write() calls on this instance reuse it directly.
+    file, malformed response, etc.), and caches whichever source works. (This
+    only ever happens once per instance — TFTDataSource.read() caches the
+    returned data across calls, so _read() below won't run again.)
 
-    write() picks the first *configured* name (without probing whether it's
-    currently readable) and delegates to it — a failed write is not retried
-    against a different source, since retrying a mutation across backends
-    risks partial or duplicate writes.
+    write() is not supported, since there's no single unambiguous backend to
+    write to across an ordered list of sources.
     """
 
     ORDER_ENV_VAR = "TFT_DATASOURCE_ORDER"
+    DEFAULT_ORDER = "gcp,cdragon,local"
 
     def __init__(self):
-        order = os.environ.get(self.ORDER_ENV_VAR, "gcp,cdragon,local")
+        super().__init__()
+        order = os.environ.get(self.ORDER_ENV_VAR, self.DEFAULT_ORDER)
         self._names = [n.strip() for n in order.split(",") if n.strip()]
         if not self._names:
-            raise ValueError(
-                f"No data source order specified; pass order= or set {self.ORDER_ENV_VAR}"
-            )
+            raise ValueError(f"No data source order specified; set {self.ORDER_ENV_VAR}")
         self._resolved: TFTDataSource | None = None
 
-    def read(self) -> dict:
-
+    def _read(self) -> dict:
         errors = []
         for name in self._names:
             cls = REGISTRY.get(name)
@@ -71,6 +69,9 @@ class DefaultDataSource(TFTDataSource):
         raise RuntimeError(
             f"None of the data sources in {self._names} could be read: " + "; ".join(errors)
         )
+
+    def _write(self, data: dict) -> None:
+        raise NotImplementedError()
 
     def __enter__(self) -> DefaultDataSource:
         return self

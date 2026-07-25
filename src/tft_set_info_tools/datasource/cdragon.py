@@ -14,6 +14,7 @@ class CDragonDataSource(TFTDataSource):
     DEFAULT_PATCH = "latest"
 
     def __init__(self, patch: str | None = None):
+        super().__init__()
         self._patch = patch or self.DEFAULT_PATCH
         self._client = None
 
@@ -21,14 +22,14 @@ class CDragonDataSource(TFTDataSource):
     def url(self) -> str:
         return self.URL_TEMPLATE.format(patch=self._patch)
 
-    def read(self) -> dict:
+    def _read(self) -> dict:
         import httpx
 
         response = self._client.get(self.url) if self._client else httpx.get(self.url)
         response.raise_for_status()
         return response.json()
 
-    def write(self, data: dict | TFTDataSource) -> None:
+    def _write(self, data: dict) -> None:
         raise NotImplementedError("CDragonDataSource is read-only.")
 
     def __enter__(self) -> CDragonDataSource:
