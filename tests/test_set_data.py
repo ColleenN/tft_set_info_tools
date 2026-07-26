@@ -126,6 +126,18 @@ def test_get_shop_units_excludes_traitless_champions():
     assert names == {"Zilean"}
 
 
+def test_get_units_includes_traitless_champions():
+    set_data = TFTSetData(make_base(), set_num=12)
+    names = {c["name"] for c in set_data.get_units()}
+    assert names == {"Zilean", "TrainingDummy"}
+
+
+def test_get_traits_returns_full_detail():
+    set_data = TFTSetData(make_base(), set_num=12)
+    names = {t["name"] for t in set_data.get_traits()}
+    assert names == {"Chrono", "Preserver"}
+
+
 def test_get_unique_traits():
     set_data = TFTSetData(make_base(), set_num=12)
     assert set_data.get_unique_traits() == ["Preserver"]

@@ -42,9 +42,12 @@ class TFTSetData:
     def mutator(self) -> str:
         return self._set["mutator"]
 
+    def get_traits(self) -> list[dict]:
+        return self._set["traits"]
+
     def get_unique_traits(self) -> list[str]:
         names = []
-        for trait in self._set["traits"]:
+        for trait in self.get_traits():
             effects = trait.get("effects") or []
             if not effects:
                 continue
@@ -65,8 +68,11 @@ class TFTSetData:
             ]
         return items
 
+    def get_units(self) -> list[dict]:
+        return self._set["champions"]
+
     def get_shop_units(self) -> list[dict]:
-        return [c for c in self._set["champions"] if len(c.get("traits", [])) > 0]
+        return [c for c in self.get_units() if len(c.get("traits", [])) > 0]
 
     def get_augments(self, tier: AugmentTier | None = None) -> list[dict]:
         augments = [
