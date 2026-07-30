@@ -56,7 +56,9 @@ def clear_env(monkeypatch):
 
 
 def test_parse_types_expands_all():
-    assert set(_parse_types("all")) == set(_parse_types("traits,items,units,unit_innate_traits,augments"))
+    assert set(_parse_types("all")) == set(
+        _parse_types("trait_tiers,items,units,unit_innate_traits,augments")
+    )
 
 
 def test_parse_types_rejects_unknown():
@@ -70,10 +72,10 @@ def test_run_writes_only_requested_types(monkeypatch, tmp_path):
     monkeypatch.setenv("TFT_LOCAL_PATH", str(src_path))
     out_dir = tmp_path / "out"
 
-    run("local", str(out_dir), 12, "items,traits")
+    run("local", str(out_dir), 12, "items,trait_tiers")
 
     assert (out_dir / "seed_items.csv").exists()
-    assert (out_dir / "seed_traits.csv").exists()
+    assert (out_dir / "seed_trait_tiers.csv").exists()
     assert not (out_dir / "seed_units.csv").exists()
 
     with (out_dir / "seed_items.csv").open(newline="", encoding="utf-8") as f:

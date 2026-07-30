@@ -2,20 +2,26 @@
 
 from __future__ import annotations
 
+import os
 from types import TracebackType
 
 from tft_set_info_tools.datasource.base import TFTDataSource
 
 
 class CDragonDataSource(TFTDataSource):
-    """Read-only source that fetches TFT metadata json from Community Dragon."""
+    """Read-only source that fetches TFT metadata json from Community Dragon.
+
+    ``patch`` falls back to the ``TFT_CDRAGON_PATCH`` environment variable when
+    not passed explicitly, so this class can be zero-arg constructed.
+    """
 
     URL_TEMPLATE = "https://raw.communitydragon.org/{patch}/cdragon/tft/en_us.json"
     DEFAULT_PATCH = "latest"
+    PATCH_ENV_VAR = "TFT_CDRAGON_PATCH"
 
     def __init__(self, patch: str | None = None):
         super().__init__()
-        self._patch = patch or self.DEFAULT_PATCH
+        self._patch = patch or os.environ.get(self.PATCH_ENV_VAR) or self.DEFAULT_PATCH
         self._client = None
 
     @property

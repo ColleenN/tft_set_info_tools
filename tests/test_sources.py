@@ -35,6 +35,18 @@ def test_build_source_cdragon():
     assert isinstance(build_source("cdragon"), CDragonDataSource)
 
 
+def test_build_source_cdragon_with_patch():
+    source = build_source("cdragon", patch="13.24")
+    assert isinstance(source, CDragonDataSource)
+    assert source.url.endswith("/13.24/cdragon/tft/en_us.json")
+
+
+def test_build_source_patch_rejected_for_non_cdragon_source(monkeypatch, tmp_path):
+    monkeypatch.setenv("TFT_LOCAL_PATH", str(tmp_path / "data.json"))
+    with pytest.raises(ValueError):
+        build_source("local", patch="13.24")
+
+
 def test_build_source_default_by_name():
     assert isinstance(build_source("default"), DefaultDataSource)
 

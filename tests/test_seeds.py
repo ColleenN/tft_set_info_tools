@@ -108,8 +108,8 @@ def test_generate_augments(set_data):
     assert rows[0]["tier"] == "SILVER"
 
 
-def test_generate_traits(set_data):
-    rows = SEED_GENERATORS["traits"](set_data)
+def test_generate_trait_tiers(set_data):
+    rows = SEED_GENERATORS["trait_tiers"](set_data)
 
     types = {(r["api_name"], r["type"]) for r in rows}
     assert types == {

@@ -14,6 +14,7 @@ def clear_env(monkeypatch):
 @pytest.fixture
 def fake_cdragon_client(monkeypatch):
     payload = {"items": []}
+    requested_urls: list[str] = []
 
     class FakeResponse:
         def raise_for_status(self):
@@ -24,22 +25,36 @@ def fake_cdragon_client(monkeypatch):
 
     class FakeClient:
         def get(self, url):
+            requested_urls.append(url)
             return FakeResponse()
 
         def close(self):
             pass
 
     monkeypatch.setattr("httpx.Client", FakeClient)
-    return payload
+    payload_and_urls = (payload, requested_urls)
+    return payload_and_urls
 
 
 def test_run_copies_cdragon_to_local(fake_cdragon_client, monkeypatch, tmp_path):
+    payload, requested_urls = fake_cdragon_client
     dst_path = tmp_path / "out.json"
     monkeypatch.setenv("TFT_LOCAL_PATH", str(dst_path))
 
     run("cdragon", "local")
 
-    assert json.loads(dst_path.read_text(encoding="utf-8")) == fake_cdragon_client
+    assert json.loads(dst_path.read_text(encoding="utf-8")) == payload
+    assert requested_urls == ["https://raw.communitydragon.org/latest/cdragon/tft/en_us.json"]
+
+
+def test_run_uses_src_patch_for_cdragon(fake_cdragon_client, monkeypatch, tmp_path):
+    _, requested_urls = fake_cdragon_client
+    dst_path = tmp_path / "out.json"
+    monkeypatch.setenv("TFT_LOCAL_PATH", str(dst_path))
+
+    run("cdragon", "local", src_patch="13.24")
+
+    assert requested_urls == ["https://raw.communitydragon.org/13.24/cdragon/tft/en_us.json"]
 
 
 def test_run_raises_on_unknown_source():

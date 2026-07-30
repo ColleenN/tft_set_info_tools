@@ -186,6 +186,16 @@ def test_cdragon_data_source_uses_requested_patch():
     assert CDragonDataSource(patch="14.1").url.endswith("/14.1/cdragon/tft/en_us.json")
 
 
+def test_cdragon_data_source_uses_patch_env_var(monkeypatch):
+    monkeypatch.setenv("TFT_CDRAGON_PATCH", "14.2")
+    assert CDragonDataSource().url.endswith("/14.2/cdragon/tft/en_us.json")
+
+
+def test_cdragon_data_source_explicit_patch_overrides_env_var(monkeypatch):
+    monkeypatch.setenv("TFT_CDRAGON_PATCH", "14.2")
+    assert CDragonDataSource(patch="14.1").url.endswith("/14.1/cdragon/tft/en_us.json")
+
+
 def test_cdragon_data_source_write_raises():
     with pytest.raises(NotImplementedError):
         CDragonDataSource().write({})

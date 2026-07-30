@@ -1,9 +1,9 @@
 """Seed CSV row generators.
 
-traits/items/units/unit_innate_traits port the column schemas and filtering
-logic from the legacy tft_tools seed_gen package byte-for-byte (modulo
-reading from TFTSetData instead of the old TFTSetBlob). augments has no
-legacy precedent — that seed type didn't exist in the old package — so its
+trait_tiers/items/units/unit_innate_traits port the column schemas and
+filtering logic from the legacy tft_tools seed_gen package byte-for-byte
+(modulo reading from TFTSetData instead of the old TFTSetBlob). augments has
+no legacy precedent — that seed type didn't exist in the old package — so its
 schema below is new.
 """
 
@@ -87,7 +87,7 @@ _ITEM_FLAG_HASHES = {
 }
 
 
-def _generate_traits(set_data: TFTSetData) -> list[dict]:
+def _generate_trait_tiers(set_data: TFTSetData) -> list[dict]:
     rows = []
     for trait in set_data.get_traits():
         for tier_effect in trait.get("effects") or []:
@@ -202,7 +202,7 @@ def _generate_unit_innate_traits(set_data: TFTSetData) -> list[dict]:
 
 
 SEED_GENERATORS: dict[str, Callable[[TFTSetData], list[dict]]] = {
-    "traits": _generate_traits,
+    "trait_tiers": _generate_trait_tiers,
     "items": _generate_items,
     "units": _generate_units,
     "unit_innate_traits": _generate_unit_innate_traits,

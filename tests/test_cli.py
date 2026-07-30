@@ -98,6 +98,59 @@ def test_update_src_subcommand_returns_one_on_unknown_source():
     assert main(["update-src", "not_a_real_source", "local"]) == 1
 
 
+def test_update_src_subcommand_accepts_src_patch_flag(fake_cdragon_client, monkeypatch, tmp_path):
+    dst_path = tmp_path / "out.json"
+    monkeypatch.setenv("TFT_LOCAL_PATH", str(dst_path))
+
+    exit_code = main(["update-src", "cdragon", "local", "--src-patch", "13.24"])
+
+    assert exit_code == 0
+    assert json.loads(dst_path.read_text(encoding="utf-8")) == fake_cdragon_client
+
+
+def test_update_src_src_patch_rejected_for_non_cdragon_source(monkeypatch, tmp_path):
+    src_path = tmp_path / "src.json"
+    src_path.write_text(json.dumps(make_base()), encoding="utf-8")
+    dst_path = tmp_path / "out.json"
+    monkeypatch.setenv("TFT_LOCAL_PATH", str(src_path))
+
+    exit_code = main(
+        ["update-src", "local", "gcp", "--src-patch", "13.24"]
+    )
+
+    assert exit_code == 1
+
+
+def test_env_file_sets_unset_variables(fake_cdragon_client, tmp_path):
+    dst_path = tmp_path / "out.json"
+    env_file = tmp_path / ".env"
+    env_file.write_text(f"TFT_LOCAL_PATH={dst_path}\n", encoding="utf-8")
+
+    exit_code = main(["--env-file", str(env_file), "update-src", "cdragon", "local"])
+
+    assert exit_code == 0
+    assert json.loads(dst_path.read_text(encoding="utf-8")) == fake_cdragon_client
+
+
+def test_env_file_does_not_override_existing_env(fake_cdragon_client, monkeypatch, tmp_path):
+    dst_path = tmp_path / "out.json"
+    other_path = tmp_path / "other.json"
+    monkeypatch.setenv("TFT_LOCAL_PATH", str(dst_path))
+    env_file = tmp_path / ".env"
+    env_file.write_text(f"TFT_LOCAL_PATH={other_path}\n", encoding="utf-8")
+
+    exit_code = main(["--env-file", str(env_file), "update-src", "cdragon", "local"])
+
+    assert exit_code == 0
+    assert dst_path.exists()
+    assert not other_path.exists()
+
+
+def test_env_file_missing_returns_one(tmp_path):
+    missing = tmp_path / "does_not_exist.env"
+    assert main(["--env-file", str(missing), "update-src", "cdragon", "local"]) == 1
+
+
 def test_generate_seed_subcommand_returns_zero_on_success(monkeypatch, tmp_path):
     src_path = tmp_path / "src.json"
     src_path.write_text(json.dumps(make_base()), encoding="utf-8")
@@ -121,7 +174,7 @@ def test_generate_seed_subcommand_returns_zero_on_success(monkeypatch, tmp_path)
     assert exit_code == 0
     assert (out_dir / "seed_items.csv").exists()
     assert (out_dir / "seed_units.csv").exists()
-    assert (out_dir / "seed_traits.csv").exists()
+    assert (out_dir / "seed_trait_tiers.csv").exists()
     assert (out_dir / "seed_unit_innate_traits.csv").exists()
 
 
