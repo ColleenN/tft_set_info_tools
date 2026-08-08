@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import traceback
 from pathlib import Path
 
 from tft_set_info_tools.scripts import generate_seed, update_src
@@ -69,6 +70,7 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "generate-seed":
             generate_seed.run(args.src, args.dst_path, args.set_num, args.type)
     except Exception as exc:
+        print(traceback.format_exc(), file=sys.stderr)
         print(f"error: {exc}", file=sys.stderr)
         return 1
     return 0

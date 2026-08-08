@@ -74,6 +74,16 @@ _COMPONENT_NAME_MAP = {
     "TFT_Item_SparringGloves": "num_gloves",
     "TFT_Item_Spatula": "num_spats",
     "TFT_Item_TearOfTheGoddess": "num_tears",
+    "DA_Component_BFSword": "num_swords",
+    "DA_Component_ChainVest": "num_vests",
+    "DA_Component_FryingPan": "num_pans",
+    "DA_Component_GiantsBelt": "num_belts",
+    "DA_Component_NeedlesslyLargeRod": "num_rods",
+    "DA_Component_NegatronCloak": "num_cloaks",
+    "DA_Component_RecurveBow": "num_bows",
+    "DA_Component_SparringGloves": "num_gloves",
+    "DA_Component_Spatula": "num_spats",
+    "DA_Component_TearOfTheGoddess": "num_tears",
 }
 
 _ITEM_FLAG_HASHES = {
