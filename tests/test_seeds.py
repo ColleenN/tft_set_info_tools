@@ -1,5 +1,6 @@
 import pytest
 
+from tests.conftest import DictDataSource
 from tft_set_info_tools.scripts.seeds import SEED_GENERATORS
 from tft_set_info_tools.set_data import TFTSetData
 
@@ -86,7 +87,7 @@ def make_full_base():
 
 @pytest.fixture
 def set_data():
-    return TFTSetData(make_full_base(), set_num=12)
+    return TFTSetData(DictDataSource(make_full_base()), set_num=12)
 
 
 def test_generate_items(set_data):

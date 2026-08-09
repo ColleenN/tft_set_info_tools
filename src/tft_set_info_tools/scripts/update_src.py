@@ -14,7 +14,7 @@ def run(src: str, dst: str, src_patch: str | None = None) -> None:
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
-        "src", help="Data source to read from: local, gcp, cdragon, or default"
+        "src", help="Data source to read from: local, gcp, cdragon, metatft, or default"
     )
     parser.add_argument(
         "dst",

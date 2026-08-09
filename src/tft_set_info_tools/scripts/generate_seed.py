@@ -57,7 +57,7 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--src",
         default=None,
-        help="Data source to read from: local, gcp, cdragon, or default. Defaults to default.",
+        help="Data source to read from: local, gcp, cdragon, metatft, or default. Defaults to default.",
     )
     parser.add_argument(
         "--dst-path",

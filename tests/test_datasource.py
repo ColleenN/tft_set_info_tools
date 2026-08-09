@@ -8,6 +8,7 @@ from tft_set_info_tools.datasource import (
     CDragonDataSource,
     GCPDataSource,
     LocalDataSource,
+    MetaTFTDataSource,
     TFTDataSource,
 )
 
@@ -242,6 +243,87 @@ def test_cdragon_data_source_read_reuses_client_in_context(monkeypatch):
     monkeypatch.setattr("httpx.Client", FakeClient)
 
     with CDragonDataSource() as source:
+        assert source.read() == payload
+        client = source._client
+    assert client.closed
+
+
+def test_metatft_data_source_default_url():
+    assert (
+        MetaTFTDataSource().url
+        == "https://data.metatft.com/lookups/TFTSet18_pbe_en_us.json"
+    )
+
+
+def test_metatft_data_source_explicit_url_overrides_default():
+    source = MetaTFTDataSource(url="https://data.metatft.com/lookups/TFTSet19_live_en_us.json")
+    assert source.url == "https://data.metatft.com/lookups/TFTSet19_live_en_us.json"
+
+
+def test_metatft_data_source_uses_url_env_var(monkeypatch):
+    monkeypatch.setenv(
+        "TFT_METATFT_URL", "https://data.metatft.com/lookups/TFTSet19_live_en_us.json"
+    )
+    assert (
+        MetaTFTDataSource().url
+        == "https://data.metatft.com/lookups/TFTSet19_live_en_us.json"
+    )
+
+
+def test_metatft_data_source_explicit_url_overrides_env_var(monkeypatch):
+    monkeypatch.setenv(
+        "TFT_METATFT_URL", "https://data.metatft.com/lookups/TFTSet19_live_en_us.json"
+    )
+    source = MetaTFTDataSource(url="https://data.metatft.com/lookups/TFTSet20_live_en_us.json")
+    assert source.url == "https://data.metatft.com/lookups/TFTSet20_live_en_us.json"
+
+
+def test_metatft_data_source_write_raises():
+    with pytest.raises(NotImplementedError):
+        MetaTFTDataSource().write({})
+
+
+def test_metatft_data_source_read(monkeypatch):
+    payload = {"units": [], "_metadata": {"set": "TFTSet18"}}
+
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return payload
+
+    def fake_get(url):
+        assert url == MetaTFTDataSource().url
+        return FakeResponse()
+
+    monkeypatch.setattr("httpx.get", fake_get)
+
+    assert MetaTFTDataSource().read() == payload
+
+
+def test_metatft_data_source_read_reuses_client_in_context(monkeypatch):
+    payload = {"units": [], "_metadata": {"set": "TFTSet18"}}
+
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return payload
+
+    class FakeClient:
+        closed = False
+
+        def get(self, url):
+            return FakeResponse()
+
+        def close(self):
+            self.closed = True
+
+    monkeypatch.setattr("httpx.Client", FakeClient)
+
+    with MetaTFTDataSource() as source:
         assert source.read() == payload
         client = source._client
     assert client.closed

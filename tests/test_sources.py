@@ -5,6 +5,7 @@ from tft_set_info_tools.datasource import (
     DefaultDataSource,
     GCPDataSource,
     LocalDataSource,
+    MetaTFTDataSource,
 )
 from tft_set_info_tools.scripts._sources import build_source
 
@@ -33,6 +34,10 @@ def test_build_source_gcp(monkeypatch):
 
 def test_build_source_cdragon():
     assert isinstance(build_source("cdragon"), CDragonDataSource)
+
+
+def test_build_source_metatft():
+    assert isinstance(build_source("metatft"), MetaTFTDataSource)
 
 
 def test_build_source_cdragon_with_patch():

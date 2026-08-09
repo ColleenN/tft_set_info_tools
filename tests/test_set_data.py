@@ -2,6 +2,7 @@ import json
 
 import pytest
 
+from tests.conftest import DictDataSource
 from tft_set_info_tools.datasource import LocalDataSource
 from tft_set_info_tools.set_data import AugmentTier, ItemType, TFTSetData
 
@@ -70,7 +71,7 @@ def clear_datasource_env(monkeypatch):
 
 
 def test_from_dict_with_explicit_set_num():
-    set_data = TFTSetData(make_base(), set_num=12)
+    set_data = TFTSetData(DictDataSource(make_base()), set_num=12)
     assert set_data.mutator == "TFTSet12"
 
 
@@ -87,59 +88,59 @@ def test_defaults_to_latest_set_when_set_num_omitted():
             "traits": [],
         }
     )
-    set_data = TFTSetData(base)
+    set_data = TFTSetData(DictDataSource(base))
     assert set_data.mutator == "TFTSet13"
 
 
 def test_missing_set_raises():
     with pytest.raises(ValueError):
-        TFTSetData(make_base(), set_num=999)
+        TFTSetData(DictDataSource(make_base()), set_num=999)
 
 
 def test_get_items_excludes_augments_and_other_sets():
-    set_data = TFTSetData(make_base(), set_num=12)
+    set_data = TFTSetData(DictDataSource(make_base()), set_num=12)
     names = {item["apiName"] for item in set_data.get_items()}
     assert names == {"TFT_Item_Support1", "TFT_Item_Artifact1"}
 
 
 def test_get_items_filtered_by_type():
-    set_data = TFTSetData(make_base(), set_num=12)
+    set_data = TFTSetData(DictDataSource(make_base()), set_num=12)
     names = {item["apiName"] for item in set_data.get_items(ItemType.ARTIFACT)}
     assert names == {"TFT_Item_Artifact1"}
 
 
 def test_get_augments_returns_only_augments():
-    set_data = TFTSetData(make_base(), set_num=12)
+    set_data = TFTSetData(DictDataSource(make_base()), set_num=12)
     names = {item["apiName"] for item in set_data.get_augments()}
     assert names == {"TFT_Augment_Silver1", "TFT_Augment_Gold1"}
 
 
 def test_get_augments_filtered_by_tier():
-    set_data = TFTSetData(make_base(), set_num=12)
+    set_data = TFTSetData(DictDataSource(make_base()), set_num=12)
     names = {item["apiName"] for item in set_data.get_augments(AugmentTier.GOLD)}
     assert names == {"TFT_Augment_Gold1"}
 
 
 def test_get_shop_units_excludes_traitless_champions():
-    set_data = TFTSetData(make_base(), set_num=12)
+    set_data = TFTSetData(DictDataSource(make_base()), set_num=12)
     names = {c["name"] for c in set_data.get_shop_units()}
     assert names == {"Zilean"}
 
 
 def test_get_units_includes_traitless_champions():
-    set_data = TFTSetData(make_base(), set_num=12)
+    set_data = TFTSetData(DictDataSource(make_base()), set_num=12)
     names = {c["name"] for c in set_data.get_units()}
     assert names == {"Zilean", "TrainingDummy"}
 
 
 def test_get_traits_returns_full_detail():
-    set_data = TFTSetData(make_base(), set_num=12)
+    set_data = TFTSetData(DictDataSource(make_base()), set_num=12)
     names = {t["name"] for t in set_data.get_traits()}
     assert names == {"Chrono", "Preserver"}
 
 
 def test_get_unique_traits():
-    set_data = TFTSetData(make_base(), set_num=12)
+    set_data = TFTSetData(DictDataSource(make_base()), set_num=12)
     assert set_data.get_unique_traits() == ["Preserver"]
 
 

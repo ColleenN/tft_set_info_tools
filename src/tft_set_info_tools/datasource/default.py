@@ -9,11 +9,13 @@ from tft_set_info_tools.datasource.base import TFTDataSource
 from tft_set_info_tools.datasource.cdragon import CDragonDataSource
 from tft_set_info_tools.datasource.gcp import GCPDataSource
 from tft_set_info_tools.datasource.local import LocalDataSource
+from tft_set_info_tools.datasource.metatft import MetaTFTDataSource
 
 REGISTRY: dict[str, type[TFTDataSource]] = {
     "local": LocalDataSource,
     "gcp": GCPDataSource,
     "cdragon": CDragonDataSource,
+    "metatft": MetaTFTDataSource,
 }
 
 

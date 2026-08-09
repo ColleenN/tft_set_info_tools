@@ -3,47 +3,37 @@
 from __future__ import annotations
 
 from tft_set_info_tools.datasource import DefaultDataSource, TFTDataSource
-from tft_set_info_tools.set_data.enums import AUGMENT_HASH_MARKER, AugmentTier, ItemType
+from tft_set_info_tools.set_data.enums import AugmentTier, ItemType
+from tft_set_info_tools.set_data.schema import SetDataSchema, detect_schema
 
 
 class TFTSetData:
-    """Represents a single TFT set's metadata, from a raw dict or TFTDataSource."""
+    """Represents a single TFT set's metadata, read from a TFTDataSource."""
 
     def __init__(
         self,
-        data_src: dict | TFTDataSource | None = None,
+        data_src: TFTDataSource | None = None,
         set_num: int | None = None,
     ):
         if data_src is None:
             data_src = DefaultDataSource()
 
-        if isinstance(data_src, TFTDataSource):
-            with data_src as source:
-                base = source.read()
-        else:
-            base = data_src
+        with data_src as source:
+            raw = source.read()
 
+        schema: SetDataSchema = detect_schema(raw)
         if set_num is None:
-            set_num = max(entry["number"] for entry in base["setData"])
+            set_num = schema.latest_set_number(raw)
 
-        set_entry = next(
-            (entry for entry in base["setData"] if entry["number"] == set_num), None
-        )
-        if set_entry is None:
-            raise ValueError(f"Could not locate set {set_num} in the provided data")
-
-        self._set = set_entry
-        included_names = set(set_entry["items"]) | set(set_entry["augments"])
-        self._data_item_details = [
-            item for item in base["items"] if item["apiName"] in included_names
-        ]
+        self._schema = schema
+        self._extracted = schema.extract(raw, set_num)
 
     @property
     def mutator(self) -> str:
-        return self._set["mutator"]
+        return self._extracted.mutator
 
     def get_traits(self) -> list[dict]:
-        return self._set["traits"]
+        return self._extracted.traits
 
     def get_unique_traits(self) -> list[str]:
         names = []
@@ -57,29 +47,19 @@ class TFTSetData:
         return names
 
     def get_items(self, item_type: ItemType | None = None) -> list[dict]:
-        items = [
-            item
-            for item in self._data_item_details
-            if AUGMENT_HASH_MARKER not in item.get("tags", [])
-        ]
+        items = self._extracted.items
         if item_type is not None:
-            items = [
-                item for item in items if item_type.type_hash in item.get("tags", [])
-            ]
+            items = [i for i in items if self._schema.item_matches(i, item_type)]
         return items
 
     def get_units(self) -> list[dict]:
-        return self._set["champions"]
+        return self._extracted.units
 
     def get_shop_units(self) -> list[dict]:
         return [c for c in self.get_units() if len(c.get("traits", [])) > 0]
 
     def get_augments(self, tier: AugmentTier | None = None) -> list[dict]:
-        augments = [
-            item
-            for item in self._data_item_details
-            if AUGMENT_HASH_MARKER in item.get("tags", [])
-        ]
+        augments = self._extracted.augments
         if tier is not None:
-            augments = [a for a in augments if tier.value in a.get("tags", [])]
+            augments = [a for a in augments if self._schema.augment_matches(a, tier)]
         return augments
