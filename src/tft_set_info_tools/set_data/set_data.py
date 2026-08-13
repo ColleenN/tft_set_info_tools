@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 from tft_set_info_tools.datasource import DefaultDataSource, TFTDataSource
-from tft_set_info_tools.set_data.enums import AugmentTier, ItemType
-from tft_set_info_tools.set_data.schema import SetDataSchema, detect_schema
+from tft_set_info_tools.schema import AugmentTier, ItemType, SetDataSchema, detect_schema
 
 
 class TFTSetData:
@@ -20,8 +19,18 @@ class TFTSetData:
 
         with data_src as source:
             raw = source.read()
+            expected_schema = source.get_schema()
 
-        schema: SetDataSchema = detect_schema(raw)
+        schema: SetDataSchema
+        if expected_schema is not None:
+            schema = expected_schema()
+            try:
+                schema.validate(raw)
+            except ValueError as exc:
+                raise ValueError(f"{type(source).__name__}: {exc}") from exc
+        else:
+            schema = detect_schema(raw)
+
         if set_num is None:
             set_num = schema.latest_set_number(raw)
 

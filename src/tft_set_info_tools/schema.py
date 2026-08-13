@@ -1,10 +1,13 @@
-"""Per-source extraction logic for turning a raw metadata dict into a single set's data.
+"""Classification vocabulary and per-source extraction logic for TFT set metadata.
 
 Different TFTDataSource origins (Community Dragon, MetaTFT, ...) publish the same
 content under different json shapes. A SetDataSchema knows how to locate a given
 set's units/traits/items/augments within one such shape, and how to classify an
-item/augment against ItemType/AugmentTier. detect_schema() picks the right one by
-sniffing the raw dict, so TFTSetData never has to know which source it came from.
+item/augment against ItemType/AugmentTier.
+
+This module has no dependency on `datasource` or `set_data` -- both of those
+depend on it instead, so it can be imported freely from either without risking
+a circular import.
 """
 
 from __future__ import annotations
@@ -12,8 +15,33 @@ from __future__ import annotations
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from enum import Enum
 
-from tft_set_info_tools.set_data.enums import AUGMENT_HASH_MARKER, AugmentTier, ItemType
+AUGMENT_HASH_MARKER = "{b72bd3bf}"
+
+
+class ItemType(Enum):
+    """TFT item categories, keyed by the hash tag CDragon uses to mark them."""
+
+    COMPONENT = ("component", "component")
+    SUPPORT = ("support", "{27557a09}")
+    ARTIFACT = ("artifact", "{44ace175}")
+    RADIANT = ("radiant", "{6ef5c598}")
+    EMBLEM = ("emblem", "{ebcd1bac}")
+    TAC_ITEM = ("tac_item", "{d304f83b}")
+    TG_ITEM = ("tg_item", "{218b53a5}")
+
+    def __init__(self, type_name: str, type_hash: str):
+        self.type_name = type_name
+        self.type_hash = type_hash
+
+
+class AugmentTier(Enum):
+    """TFT augment tiers, keyed by the hash tag CDragon uses to mark them."""
+
+    SILVER = "{d11fd6d5}"
+    GOLD = "{ce1fd21c}"
+    PRISMATIC = "{cf1fd3af}"
 
 
 @dataclass
@@ -33,6 +61,20 @@ class SetDataSchema(ABC):
     def matches(raw: dict) -> bool:
         """Whether raw looks like this schema's shape."""
         raise NotImplementedError
+
+    def validate(self, raw: dict) -> None:
+        """Raise ValueError unless raw actually matches this schema.
+
+        Used when a TFTDataSource declares a schema via get_schema(): rather
+        than silently trusting the source or re-sniffing, we assert the raw
+        data really is what that source promised, so a shape drift (e.g. the
+        upstream endpoint changing its json) fails loudly and specifically
+        instead of surfacing as a confusing KeyError deeper in extract().
+        """
+        if not self.matches(raw):
+            raise ValueError(
+                f"Data does not match the expected {type(self).__name__} shape"
+            )
 
     @abstractmethod
     def latest_set_number(self, raw: dict) -> int:

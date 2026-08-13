@@ -1,8 +1,9 @@
 import pytest
 
-from tft_set_info_tools.set_data.enums import AugmentTier, ItemType
-from tft_set_info_tools.set_data.schema import (
+from tft_set_info_tools.schema import (
+    AugmentTier,
     CDragonSchema,
+    ItemType,
     MetaTFTSchema,
     detect_schema,
 )
@@ -72,6 +73,18 @@ def test_detect_schema_picks_metatft():
 def test_detect_schema_raises_on_unrecognized_shape():
     with pytest.raises(ValueError):
         detect_schema({"nonsense": True})
+
+
+def test_validate_passes_for_matching_shape():
+    CDragonSchema().validate(make_cdragon_base())
+    MetaTFTSchema().validate(make_metatft_base())
+
+
+def test_validate_raises_for_mismatched_shape():
+    with pytest.raises(ValueError):
+        CDragonSchema().validate(make_metatft_base())
+    with pytest.raises(ValueError):
+        MetaTFTSchema().validate(make_cdragon_base())
 
 
 def test_cdragon_schema_latest_set_number():

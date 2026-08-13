@@ -18,6 +18,10 @@ def test_tft_data_source_is_abstract():
         TFTDataSource()
 
 
+def test_local_data_source_has_no_schema(tmp_path):
+    assert LocalDataSource(tmp_path / "data.json").get_schema() is None
+
+
 def test_local_data_source_round_trip(tmp_path):
     path = tmp_path / "data.json"
     payload = {"champions": ["Zilean"]}
@@ -96,6 +100,12 @@ def test_write_from_other_source_caches_the_resolved_dict(tmp_path):
     # write()'s cache must hold the resolved dict, not the source object,
     # so read() works even though the destination file is now gone.
     assert dst.read() == payload
+
+
+def test_gcp_data_source_has_no_schema(monkeypatch):
+    monkeypatch.setenv("TFT_GCP_BUCKET", "my-bucket")
+    monkeypatch.setenv("TFT_GCP_BLOB_PATH", "path/to/blob")
+    assert GCPDataSource().get_schema() is None
 
 
 def test_gcp_data_source_requires_bucket_and_blob_path(monkeypatch):
@@ -179,6 +189,12 @@ def test_gcp_data_source_closes_client_on_exit(fake_gcs):
     assert client.closed
 
 
+def test_cdragon_data_source_schema():
+    from tft_set_info_tools.schema import CDragonSchema
+
+    assert CDragonDataSource().get_schema() is CDragonSchema
+
+
 def test_cdragon_data_source_default_patch_is_latest():
     assert CDragonDataSource().url.endswith("/latest/cdragon/tft/en_us.json")
 
@@ -246,6 +262,12 @@ def test_cdragon_data_source_read_reuses_client_in_context(monkeypatch):
         assert source.read() == payload
         client = source._client
     assert client.closed
+
+
+def test_metatft_data_source_schema():
+    from tft_set_info_tools.schema import MetaTFTSchema
+
+    assert MetaTFTDataSource().get_schema() is MetaTFTSchema
 
 
 def test_metatft_data_source_default_url():

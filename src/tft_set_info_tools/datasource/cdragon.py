@@ -6,6 +6,7 @@ import os
 from types import TracebackType
 
 from tft_set_info_tools.datasource.base import TFTDataSource
+from tft_set_info_tools.schema import CDragonSchema
 
 
 class CDragonDataSource(TFTDataSource):
@@ -18,6 +19,8 @@ class CDragonDataSource(TFTDataSource):
     URL_TEMPLATE = "https://raw.communitydragon.org/{patch}/cdragon/tft/en_us.json"
     DEFAULT_PATCH = "latest"
     PATCH_ENV_VAR = "TFT_CDRAGON_PATCH"
+
+    schema = CDragonSchema
 
     def __init__(self, patch: str | None = None):
         super().__init__()

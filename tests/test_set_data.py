@@ -162,3 +162,25 @@ def test_from_none_uses_datasource_order(monkeypatch, tmp_path):
     set_data = TFTSetData(set_num=12)
 
     assert set_data.mutator == "TFTSet12"
+
+
+class _DeclaringDataSource(DictDataSource):
+    """A DictDataSource that declares a schema via get_schema(), like a real origin source."""
+
+    def __init__(self, data, schema):
+        super().__init__(data)
+        self.schema = schema
+
+
+def test_uses_declared_schema_without_sniffing():
+    from tft_set_info_tools.schema import CDragonSchema
+
+    set_data = TFTSetData(_DeclaringDataSource(make_base(), CDragonSchema), set_num=12)
+    assert set_data.mutator == "TFTSet12"
+
+
+def test_raises_when_data_does_not_match_declared_schema():
+    from tft_set_info_tools.schema import MetaTFTSchema
+
+    with pytest.raises(ValueError):
+        TFTSetData(_DeclaringDataSource(make_base(), MetaTFTSchema), set_num=12)

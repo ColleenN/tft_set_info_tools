@@ -20,6 +20,52 @@ def test_defaults_to_gcp_cdragon_local_when_env_var_unset():
     assert DefaultDataSource()._names == ["gcp", "cdragon", "local"]
 
 
+def test_get_schema_is_none_before_resolution():
+    assert DefaultDataSource().get_schema() is None
+
+
+def test_get_schema_proxies_to_resolved_source(monkeypatch, tmp_path):
+    from tft_set_info_tools.schema import CDragonSchema
+
+    payload = {"items": []}
+
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return payload
+
+    class FakeClient:
+        def get(self, url):
+            return FakeResponse()
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr("httpx.Client", FakeClient)
+    monkeypatch.setenv("TFT_DATASOURCE_ORDER", "cdragon")
+
+    source = DefaultDataSource()
+    source.read()
+
+    assert source.get_schema() is CDragonSchema
+
+
+def test_get_schema_is_none_when_resolved_source_has_none(monkeypatch, tmp_path):
+    payload = {"champions": []}
+    path = tmp_path / "data.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    monkeypatch.setenv("TFT_DATASOURCE_ORDER", "local")
+    monkeypatch.setenv("TFT_LOCAL_PATH", str(path))
+
+    source = DefaultDataSource()
+    source.read()
+
+    assert source.get_schema() is None
+
+
 def test_raises_when_order_env_var_explicitly_empty(monkeypatch):
     monkeypatch.setenv("TFT_DATASOURCE_ORDER", "")
     with pytest.raises(ValueError):

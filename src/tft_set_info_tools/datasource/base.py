@@ -5,6 +5,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from types import TracebackType
 
+from tft_set_info_tools.schema import SetDataSchema
+
 
 class TFTDataSource(ABC):
     """Interface for reading/writing TFT metadata json from/to a source.
@@ -17,8 +19,22 @@ class TFTDataSource(ABC):
     overriding read()/write() directly.
     """
 
+    schema = None
+
     def __init__(self):
         self._cache: dict | None = None
+
+    def get_schema(self) -> type[SetDataSchema] | None:
+        """The SetDataSchema this source's data is expected to match, if known.
+
+        Origin sources that always fetch from one particular endpoint (e.g.
+        CDragonDataSource, MetaTFTDataSource) know their shape up front and
+        override this. Generic passthrough sources (LocalDataSource,
+        GCPDataSource) can hold data copied from any origin, so they can't
+        declare one -- None here means "detect the shape at read time"
+        (see schema.detect_schema).
+        """
+        return self.schema
 
     def read(self, force: bool = False) -> dict:
         if force or self._cache is None:

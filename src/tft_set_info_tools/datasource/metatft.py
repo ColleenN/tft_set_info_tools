@@ -6,6 +6,7 @@ import os
 from types import TracebackType
 
 from tft_set_info_tools.datasource.base import TFTDataSource
+from tft_set_info_tools.schema import MetaTFTSchema
 
 
 class MetaTFTDataSource(TFTDataSource):
@@ -20,6 +21,8 @@ class MetaTFTDataSource(TFTDataSource):
 
     DEFAULT_URL = "https://data.metatft.com/lookups/TFTSet18_pbe_en_us.json"
     URL_ENV_VAR = "TFT_METATFT_URL"
+
+    schema = MetaTFTSchema
 
     def __init__(self, url: str | None = None):
         super().__init__()

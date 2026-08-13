@@ -10,6 +10,7 @@ from tft_set_info_tools.datasource.cdragon import CDragonDataSource
 from tft_set_info_tools.datasource.gcp import GCPDataSource
 from tft_set_info_tools.datasource.local import LocalDataSource
 from tft_set_info_tools.datasource.metatft import MetaTFTDataSource
+from tft_set_info_tools.schema import SetDataSchema
 
 REGISTRY: dict[str, type[TFTDataSource]] = {
     "local": LocalDataSource,
@@ -46,6 +47,14 @@ class DefaultDataSource(TFTDataSource):
         if not self._names:
             raise ValueError(f"No data source order specified; set {self.ORDER_ENV_VAR}")
         self._resolved: TFTDataSource | None = None
+
+    def get_schema(self) -> type[SetDataSchema] | None:
+        """Proxies to whichever concrete source resolved during the last read().
+
+        None until a successful read() has resolved a source (or if that
+        source is itself a generic passthrough with no fixed schema).
+        """
+        return self._resolved.get_schema() if self._resolved is not None else None
 
     def _read(self) -> dict:
         if self._resolved is not None:
