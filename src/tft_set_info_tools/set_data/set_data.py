@@ -3,7 +3,14 @@
 from __future__ import annotations
 
 from tft_set_info_tools.datasource import DefaultDataSource, TFTDataSource
-from tft_set_info_tools.schema import AugmentTier, ItemType, SetDataSchema, detect_schema
+from tft_set_info_tools.schema import (
+    AugmentTier,
+    ItemType,
+    SetDataSchema,
+    TraitStyle,
+    TraitTier,
+    detect_schema,
+)
 
 
 class TFTSetData:
@@ -44,15 +51,31 @@ class TFTSetData:
     def get_traits(self) -> list[dict]:
         return self._extracted.traits
 
+    def get_trait_tiers(self) -> list[TraitTier]:
+        """Every trait's activation tiers, flattened and normalized across sources."""
+        return [
+            TraitTier(
+                trait_name=trait["name"],
+                trait_api_name=trait["apiName"].upper(),
+                trait_desc=trait["desc"],
+                min_units=effect["minUnits"],
+                max_units=effect["maxUnits"],
+                style=TraitStyle(effect["style"]),
+                variables=effect.get("variables") or {},
+            )
+            for trait in self.get_traits()
+            for effect in trait.get("effects") or []
+        ]
+
     def get_unique_traits(self) -> list[str]:
         names = []
-        for trait in self.get_traits():
-            effects = trait.get("effects") or []
-            if not effects:
+        seen = set()
+        for tier in self.get_trait_tiers():
+            if tier.trait_name in seen:
                 continue
-            first_tier = effects[0]
-            if first_tier["minUnits"] == 1 and first_tier["maxUnits"] > 10:
-                names.append(trait["name"])
+            seen.add(tier.trait_name)
+            if tier.min_units == 1 and tier.max_units > 10:
+                names.append(tier.trait_name)
         return names
 
     def get_items(self, item_type: ItemType | None = None) -> list[dict]:

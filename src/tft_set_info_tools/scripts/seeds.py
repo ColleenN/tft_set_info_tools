@@ -25,14 +25,6 @@ def _camel_to_snake(value: str) -> str:
     return result
 
 
-_ICON_STYLE_MAP = {
-    1: "BRONZE",
-    3: "SILVER",
-    4: "LEGENDARY",
-    5: "GOLD",
-    6: "PRISMATIC",
-}
-
 _SUMMON_UNITS = {
     "TFT_TrainingDummy",
     "TFT_BlueGolem",
@@ -98,18 +90,19 @@ _ITEM_FLAG_HASHES = {
 
 
 def _generate_trait_tiers(set_data: TFTSetData) -> list[dict]:
-    rows = []
-    for trait in set_data.get_traits():
-        for tier_effect in trait.get("effects") or []:
-            row = {
-                "name": trait["name"],
-                "api_name": trait["apiName"].upper(),
-                "type": _ICON_STYLE_MAP[tier_effect["style"]],
-            }
-            row.update({f"tier_{_camel_to_snake(k)}": v for k, v in tier_effect.items()})
-            row["desc"] = trait["desc"]
-            rows.append(row)
-    return rows
+    return [
+        {
+            "name": tier.trait_name,
+            "api_name": tier.trait_api_name,
+            "type": tier.style.name,
+            "tier_min_units": tier.min_units,
+            "tier_max_units": tier.max_units,
+            "tier_style": tier.style.value,
+            "tier_variables": dumps(tier.variables),
+            "desc": tier.trait_desc,
+        }
+        for tier in set_data.get_trait_tiers()
+    ]
 
 
 def _legacy_item_filter(raw: dict) -> bool:

@@ -8,6 +8,10 @@ Top-level module holding the classification vocabulary and per-source extraction
 
 `AugmentTier(Enum)` - Enum for the different augment tiers in TFT. Each member is a string identifying a data entry as being of this augment tier under CDragon's tag vocabulary (used by `CDragonSchema`; other schemas map their own vocabulary to the same enum members).
 
+`TraitStyle(Enum)` - Enum for the different trait activation styles in TFT (`BRONZE`/`SILVER`/`GOLD`/`LEGENDARY`/`PRISMATIC`), keyed by the numeric `style` code raw trait effects carry on every known source.
+
+`TraitTier(dataclass, frozen)` - One activation threshold of a trait, normalized to the fields common across every source (`trait_name`, `trait_api_name`, `trait_desc`, `min_units`, `max_units`, `style: TraitStyle`, `variables: dict`). Sources aren't consistent about what *else* they attach to a raw effect dict beyond this core (e.g. MetaTFT sometimes adds a per-tier `desc` that CDragon never has, and not on every tier) -- consumers should use this normalized shape (via `TFTSetData.get_trait_tiers()`) rather than reading raw trait `effects` dicts directly, so they aren't exposed to that per-source variance.
+
 `AUGMENT_HASH_MARKER` - the CDragon tag that marks an entry in the shared `items` pool as an augment rather than an item. Only meaningful to `CDragonSchema`.
 
 `SetDataSchema` (ABC) - interface for locating/classifying a set's data within one source's json shape.

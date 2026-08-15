@@ -44,6 +44,38 @@ class AugmentTier(Enum):
     PRISMATIC = "{cf1fd3af}"
 
 
+class TraitStyle(Enum):
+    """TFT trait activation styles, keyed by the numeric code raw trait effects use."""
+
+    BRONZE = 1
+    SILVER = 3
+    LEGENDARY = 4
+    GOLD = 5
+    PRISMATIC = 6
+
+
+@dataclass(frozen=True)
+class TraitTier:
+    """One activation threshold of a trait, in a shape common to every source.
+
+    Raw trait effect dicts carry this same core (minUnits/maxUnits/style/
+    variables) on every source, but sources aren't consistent about what
+    *else* they attach per-tier (e.g. MetaTFT sometimes adds a per-tier
+    "desc" that CDragon never has, and not even on every tier of every
+    trait). Pulling out just the fields that are actually part of the TFT
+    domain model -- rather than passing the raw dict through as-is -- keeps
+    consumers from being exposed to that per-source variance.
+    """
+
+    trait_name: str
+    trait_api_name: str
+    trait_desc: str
+    min_units: int
+    max_units: int
+    style: TraitStyle
+    variables: dict
+
+
 @dataclass
 class ExtractedSet:
     mutator: str

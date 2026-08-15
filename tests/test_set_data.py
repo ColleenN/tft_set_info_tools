@@ -51,12 +51,14 @@ def make_base(set_number=12, mutator="TFTSet12"):
                     {
                         "name": "Chrono",
                         "apiName": "TFT12_Chrono",
-                        "effects": [{"minUnits": 2, "maxUnits": 4}],
+                        "desc": "Chrono desc",
+                        "effects": [{"minUnits": 2, "maxUnits": 4, "style": 3}],
                     },
                     {
                         "name": "Preserver",
                         "apiName": "TFT12_Preserver",
-                        "effects": [{"minUnits": 1, "maxUnits": 25}],
+                        "desc": "Preserver desc",
+                        "effects": [{"minUnits": 1, "maxUnits": 25, "style": 1}],
                     },
                 ],
             }
