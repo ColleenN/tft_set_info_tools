@@ -1,6 +1,6 @@
 ## schema
 
-Top-level module holding the classification vocabulary and per-source extraction logic for TFT set metadata. Depends on neither `datasource` nor `set_data` — both of those depend on it instead, so it can be imported from either without risk of a circular import.
+Top-level package holding the classification vocabulary and per-source extraction logic for TFT set metadata. Depends on neither `datasource` nor `set_data` — both of those depend on it instead, so it can be imported from either without risk of a circular import. Everything below is re-exported from `tft_set_info_tools.schema` regardless of which submodule defines it: `vocab.py` (enums), `models.py` (normalized dataclasses), `base.py` (`SetDataSchema`), `cdragon.py`/`metatft.py` (concrete schemas), `registry.py` (`SCHEMAS`/`detect_schema`).
 
 `ItemType(Enum)` - Enum for the different item types in TFT. Each member is a 2 item tuple consisting of:
 * `name` (string): The name of the item type.
