@@ -76,6 +76,58 @@ class TraitTier:
     variables: dict
 
 
+@dataclass(frozen=True)
+class Augment:
+    """One augment, normalized to the fields common across every source."""
+
+    name: str
+    api_name: str
+    tier: AugmentTier | None
+    effects: dict
+
+
+@dataclass(frozen=True)
+class Item:
+    """One equippable item, normalized to the fields the legacy seed schema needs.
+
+    `type_counts`/`component_counts` are keyed the same way regardless of
+    source: `type_counts` by the lowercase name used in seed columns (e.g.
+    "artifacts"), `component_counts` by the seed column name itself (e.g.
+    "num_swords").
+    """
+
+    name: str
+    api_name: str
+    effects: dict
+    trait_granted: str
+    unique: bool
+    num_craftables: int
+    type_counts: dict[str, int]
+    component_counts: dict[str, int]
+
+
+@dataclass(frozen=True)
+class Unit:
+    """One playable/summon unit, normalized to the fields the legacy seed schema needs."""
+
+    name: str
+    api_name: str
+    cost: int
+    role: str | None
+    shop_unit: bool
+    stats: dict
+
+
+@dataclass(frozen=True)
+class UnitTrait:
+    """One (unit, innate trait) pairing."""
+
+    unit_name: str
+    unit_api_name: str
+    trait_name: str
+    trait_api_name: str
+
+
 @dataclass
 class ExtractedSet:
     mutator: str
