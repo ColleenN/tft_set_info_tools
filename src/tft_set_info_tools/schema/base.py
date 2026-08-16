@@ -42,9 +42,14 @@ class SetDataSchema(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def item_matches(self, item: dict, item_type: ItemType) -> bool:
+    def get_item_types(self, item: dict) -> frozenset[ItemType]:
+        """Every ItemType that item, a raw item dict from this schema's shape, belongs to."""
         raise NotImplementedError
 
     @abstractmethod
-    def augment_matches(self, augment: dict, tier: AugmentTier) -> bool:
+    def get_augment_tier(self, augment: dict) -> AugmentTier | None:
+        """The AugmentTier that augment, a raw augment dict from this schema's shape, belongs to.
+
+        None if augment doesn't match any known tier.
+        """
         raise NotImplementedError

@@ -20,7 +20,7 @@ class MetaTFTSchema(SetDataSchema):
     augment tier is a plain "rarity" field rather than a tag.
 
     ITEM_TYPE_TAGS only covers the categories observed in a sample response;
-    types not listed here will simply never match via item_matches().
+    types not listed here will simply never be returned by get_item_types().
     """
 
     ITEM_TYPE_TAGS = {
@@ -62,9 +62,15 @@ class MetaTFTSchema(SetDataSchema):
             augments=raw["augments"],
         )
 
-    def item_matches(self, item: dict, item_type: ItemType) -> bool:
-        tag = self.ITEM_TYPE_TAGS.get(item_type)
-        return tag is not None and tag in item.get("tags", [])
+    def get_item_types(self, item: dict) -> frozenset[ItemType]:
+        tags = item.get("tags", [])
+        return frozenset(
+            item_type for item_type, tag in self.ITEM_TYPE_TAGS.items() if tag in tags
+        )
 
-    def augment_matches(self, augment: dict, tier: AugmentTier) -> bool:
-        return augment.get("rarity") == self.AUGMENT_TIER_VALUES.get(tier)
+    def get_augment_tier(self, augment: dict) -> AugmentTier | None:
+        rarity = augment.get("rarity")
+        return next(
+            (tier for tier, value in self.AUGMENT_TIER_VALUES.items() if value == rarity),
+            None,
+        )

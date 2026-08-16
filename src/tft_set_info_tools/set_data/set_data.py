@@ -18,8 +18,8 @@ from tft_set_info_tools.schema import (
 
 # Legacy CDragon-hash-tag vocabulary, ported byte-for-byte from the tft_tools
 # seed_gen package. Unlike ItemType/AugmentTier, these aren't (yet) modeled
-# polymorphically per-source -- get_seed_items() only recognizes CDragon's
-# hash tags.
+# polymorphically per-source -- get_equippable_items() only recognizes
+# CDragon's hash tags.
 _SUMMON_UNITS = {
     "TFT_TrainingDummy",
     "TFT_BlueGolem",
@@ -164,7 +164,7 @@ class TFTSetData:
     def get_items(self, item_type: ItemType | None = None) -> list[dict]:
         items = self._extracted.items
         if item_type is not None:
-            items = [i for i in items if self._schema.item_matches(i, item_type)]
+            items = [i for i in items if item_type in self._schema.get_item_types(i)]
         return items
 
     def get_units(self) -> list[dict]:
@@ -176,14 +176,8 @@ class TFTSetData:
     def get_augments(self, tier: AugmentTier | None = None) -> list[dict]:
         augments = self._extracted.augments
         if tier is not None:
-            augments = [a for a in augments if self._schema.augment_matches(a, tier)]
+            augments = [a for a in augments if self._schema.get_augment_tier(a) == tier]
         return augments
-
-    def _augment_tier(self, raw: dict) -> AugmentTier | None:
-        return next(
-            (tier for tier in AugmentTier if self._schema.augment_matches(raw, tier)),
-            None,
-        )
 
     def get_seed_augments(self) -> list[Augment]:
         """Every augment, normalized to the fields the legacy seed schema needs."""
@@ -191,22 +185,22 @@ class TFTSetData:
             Augment(
                 name=raw["name"],
                 api_name=raw["apiName"].upper(),
-                tier=self._augment_tier(raw),
+                tier=self._schema.get_augment_tier(raw),
                 effects=raw["effects"],
             )
             for raw in self.get_augments()
         ]
 
-    def _item_component_counts(self, raw: dict) -> dict[str, int]:
+    def _item_component_counts(self, raw: dict, item_types: frozenset[ItemType]) -> dict[str, int]:
         counts = {v: 0 for v in _COMPONENT_NAME_MAP.values()}
-        if self._schema.item_matches(raw, ItemType.COMPONENT):
+        if ItemType.COMPONENT in item_types:
             counts[_COMPONENT_NAME_MAP[raw["apiName"]]] = 1
         else:
             for component in raw["composition"]:
                 counts[_COMPONENT_NAME_MAP[component]] += 1
         return counts
 
-    def get_seed_items(self) -> list[Item]:
+    def get_equippable_items(self) -> list[Item]:
         """Equippable items, normalized/filtered per the legacy seed schema.
 
         Uses `_is_seedable_item()` to exclude consumables/Armory items the
@@ -217,6 +211,7 @@ class TFTSetData:
         for raw in self.get_items():
             if not _is_seedable_item(raw):
                 continue
+            item_types = self._schema.get_item_types(raw)
             items.append(
                 Item(
                     name=raw["name"],
@@ -230,10 +225,10 @@ class TFTSetData:
                     unique=raw["unique"],
                     num_craftables=1 if raw["composition"] else 0,
                     type_counts={
-                        name: 1 if self._schema.item_matches(raw, item_type) else 0
+                        name: 1 if item_type in item_types else 0
                         for item_type, name in _ITEM_TYPE_COLUMN_NAMES.items()
                     },
-                    component_counts=self._item_component_counts(raw),
+                    component_counts=self._item_component_counts(raw, item_types),
                 )
             )
         return items

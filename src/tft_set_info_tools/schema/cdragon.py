@@ -43,8 +43,10 @@ class CDragonSchema(SetDataSchema):
             augments=augments,
         )
 
-    def item_matches(self, item: dict, item_type: ItemType) -> bool:
-        return item_type.type_hash in item.get("tags", [])
+    def get_item_types(self, item: dict) -> frozenset[ItemType]:
+        tags = item.get("tags", [])
+        return frozenset(t for t in ItemType if t.type_hash in tags)
 
-    def augment_matches(self, augment: dict, tier: AugmentTier) -> bool:
-        return tier.value in augment.get("tags", [])
+    def get_augment_tier(self, augment: dict) -> AugmentTier | None:
+        tags = augment.get("tags", [])
+        return next((t for t in AugmentTier if t.value in tags), None)

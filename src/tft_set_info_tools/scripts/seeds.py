@@ -43,7 +43,7 @@ def _generate_trait_tiers(set_data: TFTSetData) -> list[dict]:
 
 def _generate_items(set_data: TFTSetData) -> list[dict]:
     rows = []
-    for item in set_data.get_seed_items():
+    for item in set_data.get_equippable_items():
         row = {
             "item_name": item.name,
             "item_api_name": item.api_name,

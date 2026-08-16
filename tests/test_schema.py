@@ -105,14 +105,12 @@ def test_cdragon_schema_extract_missing_set_raises():
         CDragonSchema().extract(make_cdragon_base(), 999)
 
 
-def test_cdragon_schema_item_and_augment_matches():
+def test_cdragon_schema_get_item_types_and_augment_tier():
     schema = CDragonSchema()
     item = {"tags": ["{44ace175}"]}
     augment = {"tags": ["{b72bd3bf}", "{ce1fd21c}"]}
-    assert schema.item_matches(item, ItemType.ARTIFACT)
-    assert not schema.item_matches(item, ItemType.EMBLEM)
-    assert schema.augment_matches(augment, AugmentTier.GOLD)
-    assert not schema.augment_matches(augment, AugmentTier.SILVER)
+    assert schema.get_item_types(item) == {ItemType.ARTIFACT}
+    assert schema.get_augment_tier(augment) == AugmentTier.GOLD
 
 
 def test_metatft_schema_latest_set_number():
@@ -133,17 +131,15 @@ def test_metatft_schema_extract_wrong_set_raises():
         MetaTFTSchema().extract(make_metatft_base(), 999)
 
 
-def test_metatft_schema_item_and_augment_matches():
+def test_metatft_schema_get_item_types_and_augment_tier():
     schema = MetaTFTSchema()
     item = {"tags": ["Item.Equippable.Item.Artifact"]}
     augment = {"rarity": "Gold"}
-    assert schema.item_matches(item, ItemType.ARTIFACT)
-    assert not schema.item_matches(item, ItemType.EMBLEM)
-    assert schema.augment_matches(augment, AugmentTier.GOLD)
-    assert not schema.augment_matches(augment, AugmentTier.SILVER)
+    assert schema.get_item_types(item) == {ItemType.ARTIFACT}
+    assert schema.get_augment_tier(augment) == AugmentTier.GOLD
 
 
 def test_metatft_schema_unmapped_item_type_never_matches():
     schema = MetaTFTSchema()
     item = {"tags": ["Item.Equippable.Category.Attack"]}
-    assert not schema.item_matches(item, ItemType.SUPPORT)
+    assert schema.get_item_types(item) == frozenset()

@@ -24,7 +24,7 @@ Methods:
   * Note: "Shop Units" are defined as units that possess one or more trait tags.
 * `def get_augments(self, tier: AugmentTier = None)`: Returns a list of dictionaries describing augments in the set, optionally filtered to the specified augment tier.
 * `def get_seed_augments(self) -> list[Augment]`: Every augment, normalized to the fields the seed CSV schema needs (see `Augment` in `schema.md`). `tier` is classified polymorphically, so this works for any registered schema.
-* `def get_seed_items(self) -> list[Item]`: Equippable items, normalized/filtered per the legacy `tft_tools` seed CSV schema (see `Item` in `schema.md`). The inclusion filter and component-composition parsing are still CDragon-hash-tag-specific -- this currently only produces rows for CDragon-sourced data.
+* `def get_equippable_items(self) -> list[Item]`: Equippable items, normalized/filtered per the legacy `tft_tools` seed CSV schema (see `Item` in `schema.md`). The inclusion filter and component-composition parsing are still CDragon-hash-tag-specific -- this currently only produces rows for CDragon-sourced data.
 * `def get_seed_units(self) -> list[Unit]`: Shop units plus known summon units, normalized per the legacy seed CSV schema (see `Unit` in `schema.md`).
 * `def get_seed_unit_traits(self) -> list[UnitTrait]`: Every unit's innate traits, joined to each trait's api name (see `UnitTrait` in `schema.md`).
 
