@@ -66,13 +66,13 @@ def _generate_augments(set_data: TFTSetData) -> list[dict]:
             "tier": augment.tier.name if augment.tier is not None else "",
             "effects": dumps(augment.effects),
         }
-        for augment in set_data.get_seed_augments()
+        for augment in set_data.get_normalized_augments()
     ]
 
 
 def _generate_units(set_data: TFTSetData) -> list[dict]:
     rows = []
-    for unit in set_data.get_seed_units():
+    for unit in set_data.get_normalized_units():
         row = {
             "name": unit.name,
             "api_name": unit.api_name,
@@ -93,7 +93,7 @@ def _generate_unit_innate_traits(set_data: TFTSetData) -> list[dict]:
             "trait_name": unit_trait.trait_name,
             "trait_api_name": unit_trait.trait_api_name,
         }
-        for unit_trait in set_data.get_seed_unit_traits()
+        for unit_trait in set_data.get_normalized_unit_traits()
     ]
 
 

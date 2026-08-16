@@ -4,6 +4,8 @@ Module that converts TFT metadata json into a structured object representing a s
 
 `ItemType`/`AugmentTier`/`TraitStyle`/`TraitTier`/`Augment`/`Item`/`Unit`/`UnitTrait` are re-exported here from `schema` for convenience/backwards compatibility (`from tft_set_info_tools.set_data import ItemType, AugmentTier, TraitStyle, TraitTier, Augment, Item, Unit, UnitTrait, TFTSetData` still works) — their canonical home is `schema.md`.
 
+`legacy_vocab.py` holds the legacy CDragon-hash-tag/api-name mapping dictionaries (`SUMMON_UNITS`, `EQUIPPABLE_ITEM_HASHES`, `NON_EQUIPPABLE_ITEM_HASHES`, `COMPONENT_NAME_MAP`, `ITEM_TYPE_COLUMN_NAMES`) ported byte-for-byte from the `tft_tools` `seed_gen` package. Internal to `set_data`, not re-exported from the package.
+
 `TFTSetData` - core class for representing a set's metadata.
 
 Methods:
@@ -23,10 +25,10 @@ Methods:
 * `def get_shop_units(self)`: Returns a list of dictionaries describing shop units in the set.
   * Note: "Shop Units" are defined as units that possess one or more trait tags.
 * `def get_augments(self, tier: AugmentTier = None)`: Returns a list of dictionaries describing augments in the set, optionally filtered to the specified augment tier.
-* `def get_seed_augments(self) -> list[Augment]`: Every augment, normalized to the fields the seed CSV schema needs (see `Augment` in `schema.md`). `tier` is classified polymorphically, so this works for any registered schema.
+* `def get_normalized_augments(self) -> list[Augment]`: Every augment, normalized to the fields the seed CSV schema needs (see `Augment` in `schema.md`). `tier` is classified polymorphically, so this works for any registered schema.
 * `def get_equippable_items(self) -> list[Item]`: Equippable items, normalized/filtered per the legacy `tft_tools` seed CSV schema (see `Item` in `schema.md`). The inclusion filter and component-composition parsing are still CDragon-hash-tag-specific -- this currently only produces rows for CDragon-sourced data.
-* `def get_seed_units(self) -> list[Unit]`: Shop units plus known summon units, normalized per the legacy seed CSV schema (see `Unit` in `schema.md`).
-* `def get_seed_unit_traits(self) -> list[UnitTrait]`: Every unit's innate traits, joined to each trait's api name (see `UnitTrait` in `schema.md`).
+* `def get_normalized_units(self) -> list[Unit]`: Shop units plus known summon units, normalized per the legacy seed CSV schema (see `Unit` in `schema.md`).
+* `def get_normalized_unit_traits(self) -> list[UnitTrait]`: Every unit's innate traits, joined to each trait's api name (see `UnitTrait` in `schema.md`).
 
 Properties:
 * `def mutator(self) -> str`: Returns the set's "mutator", its unique identifier in the data source.
