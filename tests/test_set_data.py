@@ -66,6 +66,49 @@ def make_base(set_number=12, mutator="TFTSet12"):
     }
 
 
+def make_metatft_base():
+    return {
+        "units": [
+            {
+                "name": "Zilean",
+                "apiName": "TFT12_Zilean",
+                "cost": 2,
+                "role": "support",
+                "traits": ["Chrono"],
+                "stats": {"hp": 550.0},
+            },
+        ],
+        "traits": [
+            {
+                "name": "Chrono",
+                "apiName": "TFT12_Chrono",
+                "desc": "Chrono desc",
+                "effects": [{"minUnits": 2, "maxUnits": 4, "style": 3}],
+            },
+        ],
+        "items": [
+            {
+                "apiName": "DA_AdaptiveHelm",
+                "name": "Adaptive Helm",
+                "tags": ["Item.Equippable.Item.Artifact"],
+                "effects": {},
+                "incompatibleTraits": [],
+                "unique": False,
+                "composition": [],
+            },
+        ],
+        "augments": [
+            {
+                "apiName": "DA_AdvancedLoan",
+                "name": "Advanced Loan",
+                "rarity": "Gold",
+                "effects": {},
+            },
+        ],
+        "_metadata": {"set": "TFTSet12", "patch": "pbe"},
+    }
+
+
 @pytest.fixture(autouse=True)
 def clear_datasource_env(monkeypatch):
     for var in ("TFT_DATASOURCE_ORDER", "TFT_LOCAL_PATH"):
@@ -186,3 +229,39 @@ def test_raises_when_data_does_not_match_declared_schema():
 
     with pytest.raises(ValueError):
         TFTSetData(_DeclaringDataSource(make_base(), MetaTFTSchema), set_num=12)
+
+
+def make_cdragon_item_base():
+    base = make_base()
+    for item in base["items"]:
+        item.setdefault("effects", {})
+        item.setdefault("incompatibleTraits", [])
+        item.setdefault("unique", False)
+        item.setdefault("composition", [])
+    return base
+
+
+def test_normalized_getters_work_for_both_cdragon_and_metatft_sources():
+    """TFTSetData and its normalized getters must not be CDragon-only.
+
+    get_equippable_items()/_item_component_counts() previously read raw
+    CDragon hash tags/api names directly; now that's delegated to the
+    schema, so this should produce the same shape of result regardless of
+    which source the data came from.
+    """
+    cdragon_data = TFTSetData(DictDataSource(make_cdragon_item_base()), set_num=12)
+    metatft_data = TFTSetData(DictDataSource(make_metatft_base()), set_num=12)
+
+    cdragon_items = {i.api_name: i for i in cdragon_data.get_equippable_items()}
+    metatft_items = {i.api_name: i for i in metatft_data.get_equippable_items()}
+
+    assert cdragon_items["TFT_ITEM_ARTIFACT1"].type_counts["artifacts"] == 1
+    assert metatft_items["DA_ADAPTIVEHELM"].type_counts["artifacts"] == 1
+
+    assert {a.api_name for a in cdragon_data.get_normalized_augments()} == {
+        "TFT_AUGMENT_SILVER1",
+        "TFT_AUGMENT_GOLD1",
+    }
+    assert {a.api_name for a in metatft_data.get_normalized_augments()} == {
+        "DA_ADVANCEDLOAN"
+    }

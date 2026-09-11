@@ -4,7 +4,50 @@ from __future__ import annotations
 
 from tft_set_info_tools.schema.base import SetDataSchema
 from tft_set_info_tools.schema.models import ExtractedSet
-from tft_set_info_tools.schema.vocab import AUGMENT_HASH_MARKER, AugmentTier, ItemType
+from tft_set_info_tools.schema.vocab import (
+    AUGMENT_HASH_MARKER,
+    AugmentTier,
+    Component,
+    ItemType,
+)
+
+# Legacy CDragon-hash-tag/api-name vocabulary, ported byte-for-byte from the
+# tft_tools seed_gen package.
+_COMPONENT_API_NAMES = {
+    "TFT_Item_BFSword": Component.SWORD,
+    "TFT_Item_ChainVest": Component.VEST,
+    "TFT_Item_FryingPan": Component.PAN,
+    "TFT_Item_GiantsBelt": Component.BELT,
+    "TFT_Item_NeedlesslyLargeRod": Component.ROD,
+    "TFT_Item_NegatronCloak": Component.CLOAK,
+    "TFT_Item_RecurveBow": Component.BOW,
+    "TFT_Item_SparringGloves": Component.GLOVES,
+    "TFT_Item_Spatula": Component.SPATULA,
+    "TFT_Item_TearOfTheGoddess": Component.TEAR,
+}
+
+_EQUIPPABLE_ITEM_HASHES = {
+    "component",
+    "{27557a09}",
+    "{44ace175}",
+    "{d304f83b}",
+    "{7ea41d13}",
+    "{6ef5c598}",
+    "{ebcd1bac}",
+    "{eda79d90}",
+    "{218b53a5}",
+    "{a3eeef8b}",
+    "{b73b012f}",
+}
+
+_NON_EQUIPPABLE_ITEM_HASHES = {
+    "Consumable",
+    "TFT_Consumable_ItemRemover",
+    "TFT_Consumable_ItemReroller",
+    "{b4fe26c6}",
+    "{fb608fdb}",
+    "{56b1acc8}",
+}
 
 
 class CDragonSchema(SetDataSchema):
@@ -50,3 +93,16 @@ class CDragonSchema(SetDataSchema):
     def get_augment_tier(self, augment: dict) -> AugmentTier | None:
         tags = augment.get("tags", [])
         return next((t for t in AugmentTier if t.value in tags), None)
+
+    def get_component(self, item: dict) -> Component | None:
+        return _COMPONENT_API_NAMES.get(item["apiName"])
+
+    def is_equippable_item(self, item: dict) -> bool:
+        tags = set(item.get("tags", []))
+        if tags & _NON_EQUIPPABLE_ITEM_HASHES:
+            return False
+        if "Armory" in item["apiName"]:
+            return False
+        if tags & _EQUIPPABLE_ITEM_HASHES:
+            return item["apiName"] != "TFT16_Item_Bilgewater_BrigandsDice"
+        return item["apiName"] == "TFT9_Item_CrownOfDemacia"

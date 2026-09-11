@@ -3,6 +3,7 @@ import pytest
 from tft_set_info_tools.schema import (
     AugmentTier,
     CDragonSchema,
+    Component,
     ItemType,
     MetaTFTSchema,
     detect_schema,
@@ -113,6 +114,32 @@ def test_cdragon_schema_get_item_types_and_augment_tier():
     assert schema.get_augment_tier(augment) == AugmentTier.GOLD
 
 
+def test_cdragon_schema_get_component():
+    schema = CDragonSchema()
+    assert schema.get_component({"apiName": "TFT_Item_BFSword"}) == Component.SWORD
+    assert schema.get_component({"apiName": "TFT_Item_GuinsoosRageblade"}) is None
+
+
+def test_cdragon_schema_is_equippable_item():
+    schema = CDragonSchema()
+    assert schema.is_equippable_item(
+        {"apiName": "TFT_Item_GuinsoosRageblade", "tags": ["{27557a09}"]}
+    )
+    assert not schema.is_equippable_item(
+        {"apiName": "TFT_Consumable_ItemRemover", "tags": ["Consumable"]}
+    )
+    assert not schema.is_equippable_item(
+        {"apiName": "TFT_Item_ArmoryDrop", "tags": ["{44ace175}"]}
+    )
+    assert not schema.is_equippable_item(
+        {"apiName": "TFT16_Item_Bilgewater_BrigandsDice", "tags": ["{44ace175}"]}
+    )
+    assert schema.is_equippable_item(
+        {"apiName": "TFT9_Item_CrownOfDemacia", "tags": []}
+    )
+    assert not schema.is_equippable_item({"apiName": "TFT_Item_SomeOtherThing", "tags": []})
+
+
 def test_metatft_schema_latest_set_number():
     assert MetaTFTSchema().latest_set_number(make_metatft_base()) == 18
 
@@ -143,3 +170,19 @@ def test_metatft_schema_unmapped_item_type_never_matches():
     schema = MetaTFTSchema()
     item = {"tags": ["Item.Equippable.Category.Attack"]}
     assert schema.get_item_types(item) == frozenset()
+
+
+def test_metatft_schema_get_component():
+    schema = MetaTFTSchema()
+    assert schema.get_component({"apiName": "DA_Component_BFSword"}) == Component.SWORD
+    assert schema.get_component({"apiName": "DA_AdaptiveHelm"}) is None
+
+
+def test_metatft_schema_is_equippable_item():
+    schema = MetaTFTSchema()
+    assert schema.is_equippable_item(
+        {"apiName": "DA_AdaptiveHelm", "tags": ["Item.Equippable.Item.Artifact"]}
+    )
+    assert not schema.is_equippable_item(
+        {"apiName": "DA_SomeConsumable", "tags": ["Item.Consumable"]}
+    )

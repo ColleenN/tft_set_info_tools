@@ -2,9 +2,9 @@
 
 Module that converts TFT metadata json into a structured object representing a single set's metadata. Different sources publish the same content under different json shapes (see `datasource_v3.md`); this module is shape-agnostic — it detects which shape it was given and reads through a common interface provided by the top-level `schema` module (see `schema.md`), which `set_data` depends on but doesn't own.
 
-`ItemType`/`AugmentTier`/`TraitStyle`/`TraitTier`/`Augment`/`Item`/`Unit`/`UnitTrait` are re-exported here from `schema` for convenience/backwards compatibility (`from tft_set_info_tools.set_data import ItemType, AugmentTier, TraitStyle, TraitTier, Augment, Item, Unit, UnitTrait, TFTSetData` still works) — their canonical home is `schema.md`.
+`ItemType`/`AugmentTier`/`Component`/`TraitStyle`/`TraitTier`/`Augment`/`Item`/`Unit`/`UnitTrait` are re-exported here from `schema` for convenience/backwards compatibility (`from tft_set_info_tools.set_data import ItemType, AugmentTier, Component, TraitStyle, TraitTier, Augment, Item, Unit, UnitTrait, TFTSetData` still works) — their canonical home is `schema.md`.
 
-`legacy_vocab.py` holds the legacy CDragon-hash-tag/api-name mapping dictionaries (`SUMMON_UNITS`, `EQUIPPABLE_ITEM_HASHES`, `NON_EQUIPPABLE_ITEM_HASHES`, `COMPONENT_NAME_MAP`, `ITEM_TYPE_COLUMN_NAMES`) ported byte-for-byte from the `tft_tools` `seed_gen` package. Internal to `set_data`, not re-exported from the package.
+`legacy_vocab.py` holds the legacy seed CSV column-naming vocabulary (`SUMMON_UNITS`, `ITEM_TYPE_COLUMN_NAMES`, `COMPONENT_COLUMN_NAMES`), ported byte-for-byte from the `tft_tools` `seed_gen` package. Internal to `set_data`, not re-exported from the package. Unlike the CDragon/MetaTFT-specific vocabulary in `schema/cdragon.py`/`schema/metatft.py`, these aren't about interpreting raw per-source data -- they're about what column name a given `ItemType`/`Component` gets in the legacy seed CSV schema, which is a `set_data`/seed-generation concern, not a `schema` one. `TFTSetData` and everything downstream of it (`legacy_vocab.py` included) is source-agnostic: every place that needs to interpret raw per-source data delegates to `self._schema`.
 
 `TFTSetData` - core class for representing a set's metadata.
 
@@ -26,7 +26,7 @@ Methods:
   * Note: "Shop Units" are defined as units that possess one or more trait tags.
 * `def get_augments(self, tier: AugmentTier = None)`: Returns a list of dictionaries describing augments in the set, optionally filtered to the specified augment tier.
 * `def get_normalized_augments(self) -> list[Augment]`: Every augment, normalized to the fields the seed CSV schema needs (see `Augment` in `schema.md`). `tier` is classified polymorphically, so this works for any registered schema.
-* `def get_equippable_items(self) -> list[Item]`: Equippable items, normalized/filtered per the legacy `tft_tools` seed CSV schema (see `Item` in `schema.md`). The inclusion filter and component-composition parsing are still CDragon-hash-tag-specific -- this currently only produces rows for CDragon-sourced data.
+* `def get_equippable_items(self) -> list[Item]`: Equippable items, normalized/filtered per the legacy `tft_tools` seed CSV schema (see `Item` in `schema.md`). The inclusion filter (`SetDataSchema.is_equippable_item()`) and component-composition parsing (`SetDataSchema.get_component()`) are polymorphic, so this produces rows for any registered schema -- though see the `MetaTFTSchema.is_equippable_item()` caveat in `schema.md`.
 * `def get_normalized_units(self) -> list[Unit]`: Shop units plus known summon units, normalized per the legacy seed CSV schema (see `Unit` in `schema.md`).
 * `def get_normalized_unit_traits(self) -> list[UnitTrait]`: Every unit's innate traits, joined to each trait's api name (see `UnitTrait` in `schema.md`).
 

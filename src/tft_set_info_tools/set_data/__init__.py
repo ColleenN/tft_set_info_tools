@@ -3,6 +3,7 @@
 from tft_set_info_tools.schema import (
     Augment,
     AugmentTier,
+    Component,
     Item,
     ItemType,
     TraitStyle,
@@ -16,6 +17,7 @@ __all__ = [
     "TFTSetData",
     "ItemType",
     "AugmentTier",
+    "Component",
     "TraitStyle",
     "TraitTier",
     "Augment",

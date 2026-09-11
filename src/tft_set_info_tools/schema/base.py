@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 from tft_set_info_tools.schema.models import ExtractedSet
-from tft_set_info_tools.schema.vocab import AugmentTier, ItemType
+from tft_set_info_tools.schema.vocab import AugmentTier, Component, ItemType
 
 
 class SetDataSchema(ABC):
@@ -51,5 +51,26 @@ class SetDataSchema(ABC):
         """The AugmentTier that augment, a raw augment dict from this schema's shape, belongs to.
 
         None if augment doesn't match any known tier.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_component(self, item: dict) -> Component | None:
+        """The Component that item, a raw item dict from this schema's shape, is.
+
+        None if item isn't itself one of the 10 basic components (e.g. it's
+        a craftable/completed item, or some other non-component entry).
+        Only `item["apiName"]` is read, so a minimal dict (e.g. one built
+        from a craftable item's raw "composition" list of api names) works
+        too.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def is_equippable_item(self, item: dict) -> bool:
+        """Whether item, a raw item dict from this schema's shape, is real equippable gear.
+
+        Excludes consumables, item-pool markers, and other non-equipment
+        entries that share the same raw items pool on some sources.
         """
         raise NotImplementedError

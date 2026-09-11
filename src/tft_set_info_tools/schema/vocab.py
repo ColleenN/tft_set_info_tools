@@ -23,6 +23,27 @@ class ItemType(Enum):
         self.type_hash = type_hash
 
 
+class Component(Enum):
+    """The 10 basic TFT component items, common to every set.
+
+    Unlike ItemType, no member carries a source-specific vocabulary value --
+    each concrete SetDataSchema owns its own raw-api-name-to-Component
+    mapping (see get_component()), since sources aren't consistent about
+    what api name a given component uses.
+    """
+
+    SWORD = "sword"
+    VEST = "vest"
+    PAN = "pan"
+    BELT = "belt"
+    ROD = "rod"
+    CLOAK = "cloak"
+    BOW = "bow"
+    GLOVES = "gloves"
+    SPATULA = "spatula"
+    TEAR = "tear"
+
+
 class AugmentTier(Enum):
     """TFT augment tiers, keyed by the hash tag CDragon uses to mark them."""
 

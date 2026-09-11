@@ -35,8 +35,12 @@ def _write_seed_csv(out_dir: Path, seed_type: str, rows: list[dict]) -> None:
         )
         return
     out_file = out_dir / f"seed_{seed_type}.csv"
+    # Rows aren't guaranteed to share the same keys (e.g. units carry
+    # whatever stat columns that particular champion's raw data has), so
+    # fieldnames must be the union across every row, not just the first.
+    fieldnames = list(dict.fromkeys(key for row in rows for key in row))
     with out_file.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        writer = csv.DictWriter(f, fieldnames=fieldnames, restval="")
         writer.writeheader()
         writer.writerows(rows)
 

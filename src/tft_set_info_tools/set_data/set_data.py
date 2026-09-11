@@ -16,24 +16,10 @@ from tft_set_info_tools.schema import (
     detect_schema,
 )
 from tft_set_info_tools.set_data.legacy_vocab import (
-    COMPONENT_NAME_MAP,
-    EQUIPPABLE_ITEM_HASHES,
+    COMPONENT_COLUMN_NAMES,
     ITEM_TYPE_COLUMN_NAMES,
-    NON_EQUIPPABLE_ITEM_HASHES,
     SUMMON_UNITS,
 )
-
-
-def _is_seedable_item(raw: dict) -> bool:
-    """Legacy CDragon-hash-tag item filter, ported byte-for-byte from tft_tools."""
-    tags = set(raw.get("tags", []))
-    if tags & NON_EQUIPPABLE_ITEM_HASHES:
-        return False
-    if "Armory" in raw["apiName"]:
-        return False
-    if tags & EQUIPPABLE_ITEM_HASHES:
-        return raw["apiName"] != "TFT16_Item_Bilgewater_BrigandsDice"
-    return raw["apiName"] == "TFT9_Item_CrownOfDemacia"
 
 
 class TFTSetData:
@@ -132,24 +118,28 @@ class TFTSetData:
         ]
 
     def _item_component_counts(self, raw: dict, item_types: frozenset[ItemType]) -> dict[str, int]:
-        counts = {v: 0 for v in COMPONENT_NAME_MAP.values()}
+        counts = {name: 0 for name in COMPONENT_COLUMN_NAMES.values()}
         if ItemType.COMPONENT in item_types:
-            counts[COMPONENT_NAME_MAP[raw["apiName"]]] = 1
+            component = self._schema.get_component(raw)
+            if component is not None:
+                counts[COMPONENT_COLUMN_NAMES[component]] = 1
         else:
-            for component in raw["composition"]:
-                counts[COMPONENT_NAME_MAP[component]] += 1
+            for component_api_name in raw["composition"]:
+                component = self._schema.get_component({"apiName": component_api_name})
+                if component is not None:
+                    counts[COMPONENT_COLUMN_NAMES[component]] += 1
         return counts
 
     def get_equippable_items(self) -> list[Item]:
         """Equippable items, normalized/filtered per the legacy seed schema.
 
-        Uses `_is_seedable_item()` to exclude consumables/Armory items the
-        way the legacy tft_tools seed_gen package did, on top of the usual
-        item/augment split already applied by `get_items()`.
+        Uses `SetDataSchema.is_equippable_item()` to exclude consumables/
+        markers the way the legacy tft_tools seed_gen package did, on top
+        of the usual item/augment split already applied by `get_items()`.
         """
         items = []
         for raw in self.get_items():
-            if not _is_seedable_item(raw):
+            if not self._schema.is_equippable_item(raw):
                 continue
             item_types = self._schema.get_item_types(raw)
             items.append(

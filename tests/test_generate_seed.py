@@ -106,3 +106,34 @@ def test_run_creates_dst_path_if_missing(monkeypatch, tmp_path):
     assert (out_dir / "seed_units.csv").exists()
 
 
+def test_run_handles_rows_with_mismatched_keys(monkeypatch, tmp_path):
+    """Regression test: champions can carry different stat keys (e.g. only
+    some have a "damageByStar" stat), so seed_units.csv rows don't all share
+    the same columns. csv.DictWriter must not be limited to the first row's
+    keys, or it raises ValueError on a later row with an extra key.
+    """
+    base = make_base()
+    base["setData"][0]["champions"].append(
+        {
+            "name": "Ryze",
+            "apiName": "TFT12_Ryze",
+            "cost": 3,
+            "role": "caster",
+            "traits": ["Chrono"],
+            "stats": {"hp": 600.0, "damageByStar": [10, 20, 30]},
+        }
+    )
+    src_path = tmp_path / "src.json"
+    src_path.write_text(json.dumps(base), encoding="utf-8")
+    monkeypatch.setenv("TFT_LOCAL_PATH", str(src_path))
+    out_dir = tmp_path / "out"
+
+    run("local", str(out_dir), 12, "units")
+
+    with (out_dir / "seed_units.csv").open(newline="", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    by_api_name = {r["api_name"]: r for r in rows}
+    assert by_api_name["TFT12_ZILEAN"]["stats_damage_by_star"] == ""
+    assert by_api_name["TFT12_RYZE"]["stats_damage_by_star"] == "[10, 20, 30]"
+
+

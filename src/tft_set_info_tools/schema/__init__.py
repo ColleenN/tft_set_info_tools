@@ -25,6 +25,7 @@ from tft_set_info_tools.schema.registry import SCHEMAS, detect_schema
 from tft_set_info_tools.schema.vocab import (
     AUGMENT_HASH_MARKER,
     AugmentTier,
+    Component,
     ItemType,
     TraitStyle,
 )
@@ -33,6 +34,7 @@ __all__ = [
     "AUGMENT_HASH_MARKER",
     "ItemType",
     "AugmentTier",
+    "Component",
     "TraitStyle",
     "TraitTier",
     "Augment",
