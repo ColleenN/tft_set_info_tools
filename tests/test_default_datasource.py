@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from tft_set_info_tools.datasource import DefaultDataSource, TFTDataSource
+from tft_set_info_tools.datasource import CDragonDataSource, DefaultDataSource, TFTDataSource
 
 
 @pytest.fixture(autouse=True)
@@ -106,7 +106,10 @@ def test_falls_back_past_a_read_failure(monkeypatch, tmp_path):
 
     monkeypatch.setattr("httpx.Client", FakeClient)
 
-    assert DefaultDataSource().read() == cdragon_payload
+    assert DefaultDataSource().read() == {
+        **cdragon_payload,
+        CDragonDataSource.TEAM_PLANNER_CODES_KEY: cdragon_payload,
+    }
 
 
 def test_raises_when_every_source_fails_to_read(monkeypatch, tmp_path):

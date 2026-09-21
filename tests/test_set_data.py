@@ -3,7 +3,7 @@ import json
 import pytest
 
 from tests.conftest import DictDataSource
-from tft_set_info_tools.datasource import LocalDataSource
+from tft_set_info_tools.datasource import CDragonDataSource, LocalDataSource
 from tft_set_info_tools.set_data import AugmentTier, ItemType, TFTSetData
 
 
@@ -187,6 +187,151 @@ def test_get_traits_returns_full_detail():
 def test_get_unique_traits():
     set_data = TFTSetData(DictDataSource(make_base()), set_num=12)
     assert set_data.get_unique_traits() == ["Preserver"]
+
+
+def _team_planner_code(mutator, *champion_ids):
+    slots = list(champion_ids) + [0] * (10 - len(champion_ids))
+    return "01" + "".join(f"{champ_id:02X}" for champ_id in slots) + mutator
+
+
+def _make_champ(name, api_name, cost=1, traits=("Chrono",)):
+    return {"name": name, "apiName": api_name, "cost": cost, "traits": list(traits)}
+
+
+def make_team_planner_base(set_number=12, mutator="TFTSet12"):
+    base = make_base(set_number=set_number, mutator=mutator)
+    base["setData"][0]["champions"] = [
+        _make_champ("Zilean", "TFT12_Zilean"),
+        _make_champ("Ahri", "TFT12_Ahri"),
+        _make_champ("TrainingDummy", "TFT_TrainingDummy", cost=0, traits=[]),
+    ]
+    return base
+
+
+def test_get_team_planner_champion_order_sorts_shop_units_alphabetically():
+    set_data = TFTSetData(DictDataSource(make_team_planner_base()), set_num=12)
+    names = [c["name"] for c in set_data.get_team_planner_champion_order()]
+    assert names == ["Ahri", "Zilean"]
+
+
+def test_decode_team_planner_code_matches_gist_example():
+    # Verbatim example from the spec, using its 10-champion alphabetical list.
+    base = make_team_planner_base()
+    base["setData"][0]["champions"] = [
+        _make_champ(f"Champ{i}", f"TFT12_Champ{i:02d}") for i in range(1, 11)
+    ]
+    set_data = TFTSetData(DictDataSource(base), set_num=12)
+    code = _team_planner_code("TFTSet12", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+    assert code == "010102030405060708090ATFTSet12"
+
+    units = set_data.decode_team_planner_code(code)
+    assert [u["name"] for u in units] == [f"Champ{i}" for i in range(1, 11)]
+
+
+def test_decode_team_planner_code_orders_and_leaves_empty_slots():
+    set_data = TFTSetData(DictDataSource(make_team_planner_base()), set_num=12)
+    # Alphabetically: TFT12_Ahri -> 01, TFT12_Zilean -> 02.
+    code = _team_planner_code("TFTSet12", 1, 2)
+    units = set_data.decode_team_planner_code(code)
+    assert [u["name"] if u else None for u in units] == [
+        "Ahri",
+        "Zilean",
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    ]
+
+
+def test_decode_team_planner_code_rejects_malformed_code():
+    set_data = TFTSetData(DictDataSource(make_team_planner_base()), set_num=12)
+    with pytest.raises(ValueError):
+        set_data.decode_team_planner_code("not-a-code")
+
+
+def test_decode_team_planner_code_rejects_mismatched_mutator():
+    set_data = TFTSetData(DictDataSource(make_team_planner_base()), set_num=12)
+    with pytest.raises(ValueError):
+        set_data.decode_team_planner_code(_team_planner_code("TFTSet13", 1))
+
+
+def test_decode_team_planner_code_rejects_out_of_range_champion_id():
+    set_data = TFTSetData(DictDataSource(make_team_planner_base()), set_num=12)
+    with pytest.raises(ValueError):
+        set_data.decode_team_planner_code(_team_planner_code("TFTSet12", 99))
+
+
+def _team_planner_code_v2(mutator, *champion_ids):
+    slots = list(champion_ids) + [0] * (10 - len(champion_ids))
+    return "02" + "".join(f"{champ_id:03X}" for champ_id in slots) + mutator
+
+
+def make_team_planner_v2_base(mutator="TFTSet12", team_planner_mutator=None):
+    base = make_team_planner_base(mutator=mutator)
+    base[CDragonDataSource.TEAM_PLANNER_CODES_KEY] = {
+        team_planner_mutator or mutator: [
+            {"character_id": "TFT12_Ahri", "team_planner_code": 1041},
+            {"character_id": "TFT12_Zilean", "team_planner_code": 1055},
+        ]
+    }
+    return base
+
+
+def test_decode_team_planner_code_v2_uses_real_team_planner_code_ids():
+    set_data = TFTSetData(DictDataSource(make_team_planner_v2_base()), set_num=12)
+    code = _team_planner_code_v2("TFTSet12", 1041, 1055)
+
+    units = set_data.decode_team_planner_code(code)
+
+    assert [u["name"] if u else None for u in units] == [
+        "Ahri",
+        "Zilean",
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    ]
+
+
+def test_decode_team_planner_code_v2_rejects_missing_mutator_in_bundled_data():
+    base = make_team_planner_v2_base(team_planner_mutator="TFTSet13")
+    set_data = TFTSetData(DictDataSource(base), set_num=12)
+    code = _team_planner_code_v2("TFTSet12", 1041)
+
+    with pytest.raises(ValueError):
+        set_data.decode_team_planner_code(code)
+
+
+def test_decode_team_planner_code_v2_rejects_unmapped_champion_id():
+    set_data = TFTSetData(DictDataSource(make_team_planner_v2_base()), set_num=12)
+    code = _team_planner_code_v2("TFTSet12", 9999)
+
+    with pytest.raises(ValueError):
+        set_data.decode_team_planner_code(code)
+
+
+def test_decode_team_planner_code_v2_rejects_when_source_has_no_bundled_data():
+    # e.g. a TFTSetData built from a non-CDragon source has no team planner codes at all.
+    set_data = TFTSetData(DictDataSource(make_team_planner_base()), set_num=12)
+    code = _team_planner_code_v2("TFTSet12", 1041)
+
+    with pytest.raises(ValueError):
+        set_data.decode_team_planner_code(code)
+
+
+def test_decode_team_planner_code_rejects_wrong_slot_width_for_version():
+    set_data = TFTSetData(DictDataSource(make_team_planner_base()), set_num=12)
+    # v1 header ("01"), but with v2-width (3 hex digit per slot) champion data.
+    with pytest.raises(ValueError):
+        set_data.decode_team_planner_code("01" + "0" * 30 + "TFTSet12")
 
 
 def test_from_tft_data_source(tmp_path):

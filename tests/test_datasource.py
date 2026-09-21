@@ -213,6 +213,12 @@ def test_cdragon_data_source_explicit_patch_overrides_env_var(monkeypatch):
     assert CDragonDataSource(patch="14.1").url.endswith("/14.1/cdragon/tft/en_us.json")
 
 
+def test_cdragon_data_source_team_planner_url_uses_same_patch():
+    assert CDragonDataSource(patch="14.1").team_planner_url.endswith(
+        "/14.1/plugins/rcp-be-lol-game-data/global/default/v1/tftchampions-teamplanner.json"
+    )
+
+
 def test_cdragon_data_source_write_raises():
     with pytest.raises(NotImplementedError):
         CDragonDataSource().write({})
@@ -220,38 +226,56 @@ def test_cdragon_data_source_write_raises():
 
 def test_cdragon_data_source_read(monkeypatch):
     payload = {"items": []}
+    team_planner_payload = {"TFTSet18": []}
 
     class FakeResponse:
+        def __init__(self, body):
+            self._body = body
+
         def raise_for_status(self):
             return None
 
         def json(self):
-            return payload
+            return self._body
 
     def fake_get(url):
-        assert url == CDragonDataSource().url
-        return FakeResponse()
+        source = CDragonDataSource()
+        if url == source.url:
+            return FakeResponse(payload)
+        assert url == source.team_planner_url
+        return FakeResponse(team_planner_payload)
 
     monkeypatch.setattr("httpx.get", fake_get)
 
-    assert CDragonDataSource().read() == payload
+    assert CDragonDataSource().read() == {
+        "items": [],
+        CDragonDataSource.TEAM_PLANNER_CODES_KEY: team_planner_payload,
+    }
 
 
 def test_cdragon_data_source_read_reuses_client_in_context(monkeypatch):
     payload = {"items": []}
+    team_planner_payload = {"TFTSet18": []}
 
     class FakeResponse:
+        def __init__(self, body):
+            self._body = body
+
         def raise_for_status(self):
             return None
 
         def json(self):
-            return payload
+            return self._body
 
     class FakeClient:
         closed = False
 
         def get(self, url):
-            return FakeResponse()
+            source = CDragonDataSource()
+            if url == source.url:
+                return FakeResponse(payload)
+            assert url == source.team_planner_url
+            return FakeResponse(team_planner_payload)
 
         def close(self):
             self.closed = True
@@ -259,7 +283,10 @@ def test_cdragon_data_source_read_reuses_client_in_context(monkeypatch):
     monkeypatch.setattr("httpx.Client", FakeClient)
 
     with CDragonDataSource() as source:
-        assert source.read() == payload
+        assert source.read() == {
+            "items": [],
+            CDragonDataSource.TEAM_PLANNER_CODES_KEY: team_planner_payload,
+        }
         client = source._client
     assert client.closed
 

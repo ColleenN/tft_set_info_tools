@@ -2,6 +2,7 @@ import json
 
 import pytest
 
+from tft_set_info_tools.datasource import CDragonDataSource
 from tft_set_info_tools.scripts.cli import main
 
 
@@ -67,23 +68,29 @@ def test_unknown_subcommand_exits():
 @pytest.fixture
 def fake_cdragon_client(monkeypatch):
     payload = {"items": []}
+    team_planner_payload = {"TFTSet18": []}
 
     class FakeResponse:
+        def __init__(self, body):
+            self._body = body
+
         def raise_for_status(self):
             return None
 
         def json(self):
-            return payload
+            return self._body
 
     class FakeClient:
         def get(self, url):
-            return FakeResponse()
+            if url.endswith("/cdragon/tft/en_us.json"):
+                return FakeResponse(payload)
+            return FakeResponse(team_planner_payload)
 
         def close(self):
             pass
 
     monkeypatch.setattr("httpx.Client", FakeClient)
-    return payload
+    return {**payload, CDragonDataSource.TEAM_PLANNER_CODES_KEY: team_planner_payload}
 
 
 def test_update_src_subcommand_returns_zero_on_success(fake_cdragon_client, monkeypatch, tmp_path):
