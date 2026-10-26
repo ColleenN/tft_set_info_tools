@@ -456,3 +456,79 @@ def test_cdragon_da_component_names_are_counted():
     assert craftable.component_counts["num_swords"] == 1
     assert craftable.component_counts["num_gloves"] == 1
     assert sum(craftable.component_counts.values()) == 2
+
+
+def _cdragon_item(api_name, name, tags, composition=()):
+    return {
+        "apiName": api_name,
+        "name": name,
+        "tags": list(tags),
+        "effects": {},
+        "incompatibleTraits": [],
+        "unique": False,
+        "composition": list(composition),
+    }
+
+
+def test_cdragon_set_mixing_both_component_naming_schemes():
+    """One CDragon set can carry TFT_Item_* and DA_Component_* names side by side.
+
+    TFTSet18's payload lists both versions of each component, so every
+    component, and every recipe built from either scheme (or a mix of the
+    two), must resolve to the same component columns.
+    """
+    base = make_cdragon_item_base()
+    new_items = [
+        _cdragon_item("TFT_Item_BFSword", "B.F. Sword", ["component"]),
+        _cdragon_item("DA_Component_BFSword", "B.F. Sword", ["component"]),
+        _cdragon_item("TFT_Item_ChainVest", "Chain Vest", ["component"]),
+        _cdragon_item("DA_Component_ChainVest", "Chain Vest", ["component"]),
+        _cdragon_item(
+            "TFT_Item_InfinityEdge",
+            "Infinity Edge",
+            ["{eda79d90}"],
+            ["TFT_Item_BFSword", "TFT_Item_SparringGloves"],
+        ),
+        _cdragon_item(
+            "DA_InfinityEdge",
+            "Infinity Edge",
+            ["{eda79d90}"],
+            ["DA_Component_BFSword", "DA_Component_SparringGloves"],
+        ),
+        _cdragon_item(
+            "DA_Bloodthirster",
+            "Bloodthirster",
+            ["{eda79d90}"],
+            ["TFT_Item_BFSword", "DA_Component_NegatronCloak"],
+        ),
+        _cdragon_item(
+            "DA_GuardianAngel",
+            "Guardian Angel",
+            ["{eda79d90}"],
+            ["DA_Component_BFSword", "TFT_Item_ChainVest"],
+        ),
+    ]
+    base["items"] += new_items
+    base["setData"][0]["items"] += [i["apiName"] for i in new_items]
+
+    items = {
+        i.api_name: i
+        for i in TFTSetData(DictDataSource(base), set_num=12).get_equippable_items()
+    }
+
+    def nonzero(api_name):
+        return {k: v for k, v in items[api_name].component_counts.items() if v}
+
+    # Both spellings of a component count as that same single component.
+    assert nonzero("TFT_ITEM_BFSWORD") == {"num_swords": 1}
+    assert nonzero("DA_COMPONENT_BFSWORD") == {"num_swords": 1}
+    assert nonzero("TFT_ITEM_CHAINVEST") == {"num_vests": 1}
+    assert nonzero("DA_COMPONENT_CHAINVEST") == {"num_vests": 1}
+
+    # A recipe in either scheme gives the same counts.
+    assert nonzero("TFT_ITEM_INFINITYEDGE") == {"num_swords": 1, "num_gloves": 1}
+    assert nonzero("DA_INFINITYEDGE") == {"num_swords": 1, "num_gloves": 1}
+
+    # A recipe mixing the two schemes counts each component once.
+    assert nonzero("DA_BLOODTHIRSTER") == {"num_swords": 1, "num_cloaks": 1}
+    assert nonzero("DA_GUARDIANANGEL") == {"num_swords": 1, "num_vests": 1}
