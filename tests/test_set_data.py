@@ -410,3 +410,49 @@ def test_normalized_getters_work_for_both_cdragon_and_metatft_sources():
     assert {a.api_name for a in metatft_data.get_normalized_augments()} == {
         "DA_ADVANCEDLOAN"
     }
+
+
+def test_cdragon_da_component_names_are_counted():
+    """CDragon sets that name components DA_Component_* still get component counts.
+
+    Covers both a component item itself and a craftable whose recipe
+    ("composition") references DA_Component_* names, as TFTSet18 does.
+    """
+    base = make_cdragon_item_base()
+    base["items"] += [
+        {
+            "apiName": "DA_Component_BFSword",
+            "name": "B.F. Sword",
+            "tags": ["component"],
+            "effects": {},
+            "incompatibleTraits": [],
+            "unique": False,
+            "composition": [],
+        },
+        {
+            "apiName": "DA_InfinityEdge",
+            "name": "Infinity Edge",
+            "tags": ["{eda79d90}"],
+            "effects": {},
+            "incompatibleTraits": [],
+            "unique": False,
+            "composition": ["DA_Component_BFSword", "DA_Component_SparringGloves"],
+        },
+    ]
+    base["setData"][0]["items"] += ["DA_Component_BFSword", "DA_InfinityEdge"]
+
+    items = {
+        i.api_name: i
+        for i in TFTSetData(DictDataSource(base), set_num=12).get_equippable_items()
+    }
+
+    component = items["DA_COMPONENT_BFSWORD"]
+    assert component.type_counts["components"] == 1
+    assert component.component_counts["num_swords"] == 1
+    assert sum(component.component_counts.values()) == 1
+
+    craftable = items["DA_INFINITYEDGE"]
+    assert craftable.num_craftables == 1
+    assert craftable.component_counts["num_swords"] == 1
+    assert craftable.component_counts["num_gloves"] == 1
+    assert sum(craftable.component_counts.values()) == 2

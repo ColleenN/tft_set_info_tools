@@ -13,6 +13,11 @@ from tft_set_info_tools.schema.vocab import (
 
 # Legacy CDragon-hash-tag/api-name vocabulary, ported byte-for-byte from the
 # tft_tools seed_gen package.
+#
+# CDragon uses two component naming schemes: the long-standing TFT_Item_*
+# names, and the DA_Component_* names newer sets (e.g. TFTSet18) use for both
+# their component items and the "composition" recipes of their craftables.
+# Both are mapped here, since one CDragon payload carries both schemes.
 _COMPONENT_API_NAMES = {
     "TFT_Item_BFSword": Component.SWORD,
     "TFT_Item_ChainVest": Component.VEST,
@@ -24,6 +29,16 @@ _COMPONENT_API_NAMES = {
     "TFT_Item_SparringGloves": Component.GLOVES,
     "TFT_Item_Spatula": Component.SPATULA,
     "TFT_Item_TearOfTheGoddess": Component.TEAR,
+    "DA_Component_BFSword": Component.SWORD,
+    "DA_Component_ChainVest": Component.VEST,
+    "DA_Component_FryingPan": Component.PAN,
+    "DA_Component_GiantsBelt": Component.BELT,
+    "DA_Component_NeedlesslyLargeRod": Component.ROD,
+    "DA_Component_NegatronCloak": Component.CLOAK,
+    "DA_Component_RecurveBow": Component.BOW,
+    "DA_Component_SparringGloves": Component.GLOVES,
+    "DA_Component_Spatula": Component.SPATULA,
+    "DA_Component_TearOfTheGoddess": Component.TEAR,
 }
 
 _EQUIPPABLE_ITEM_HASHES = {
