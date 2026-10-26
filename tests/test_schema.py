@@ -120,6 +120,17 @@ def test_cdragon_schema_get_component():
     assert schema.get_component({"apiName": "TFT_Item_GuinsoosRageblade"}) is None
 
 
+def test_cdragon_schema_get_component_handles_da_component_names():
+    # Newer sets (e.g. TFTSet18) name components DA_Component_* in CDragon.
+    schema = CDragonSchema()
+    assert schema.get_component({"apiName": "DA_Component_BFSword"}) == Component.SWORD
+    assert (
+        schema.get_component({"apiName": "DA_Component_TearOfTheGoddess"})
+        == Component.TEAR
+    )
+    assert schema.get_component({"apiName": "DA_InfinityEdge"}) is None
+
+
 def test_cdragon_schema_is_equippable_item():
     schema = CDragonSchema()
     assert schema.is_equippable_item(
