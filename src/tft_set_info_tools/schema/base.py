@@ -74,3 +74,12 @@ class SetDataSchema(ABC):
         entries that share the same raw items pool on some sources.
         """
         raise NotImplementedError
+
+    def unrecognized_tags(self, item: dict) -> frozenset[str]:
+        """Tags on item, a raw item dict from this schema's shape, that this schema has no meaning for.
+
+        Used to flag items that may have been excluded only because they carry
+        a tag the classification vocabulary doesn't know yet. Empty for
+        schemas that don't classify by tag.
+        """
+        return frozenset()

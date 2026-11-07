@@ -106,6 +106,34 @@ def test_cdragon_schema_extract_missing_set_raises():
         CDragonSchema().extract(make_cdragon_base(), 999)
 
 
+def test_cdragon_schema_extract_splits_augments_by_set_entry_not_marker():
+    raw = make_cdragon_base()
+    raw["items"].append(
+        {"apiName": "DA_18_UnmarkedAugment", "name": "Unmarked", "tags": ["{ce1fd21c}"]}
+    )
+    raw["setData"][0]["augments"].append("DA_18_UnmarkedAugment")
+
+    extracted = CDragonSchema().extract(raw, 12)
+
+    assert [i["apiName"] for i in extracted.items] == ["TFT_Item_Artifact1"]
+    assert [a["apiName"] for a in extracted.augments] == [
+        "TFT_Augment_Gold1",
+        "DA_18_UnmarkedAugment",
+    ]
+
+
+def test_cdragon_schema_unrecognized_tags():
+    schema = CDragonSchema()
+    assert schema.unrecognized_tags(
+        {"apiName": "X", "tags": ["{44ace175}", "Consumable", "{ce1fd21c}", "{5b609ae2}"]}
+    ) == {"{5b609ae2}"}
+    assert schema.unrecognized_tags({"apiName": "X"}) == frozenset()
+
+
+def test_metatft_schema_has_no_unrecognized_tags():
+    assert MetaTFTSchema().unrecognized_tags({"apiName": "X", "tags": ["Anything"]}) == frozenset()
+
+
 def test_cdragon_schema_get_item_types_and_augment_tier():
     schema = CDragonSchema()
     item = {"tags": ["{44ace175}"]}

@@ -65,11 +65,28 @@ _NON_EQUIPPABLE_ITEM_HASHES = {
 }
 
 
+# Tags confirmed to carry no meaning for classification. Tags on excluded
+# items that are in neither this set nor the vocabulary above get logged by
+# TFTSetData, so add a tag here once it's been checked.
+_IGNORED_ITEM_TAGS: set[str] = set()
+
+_RECOGNIZED_ITEM_TAGS = (
+    _EQUIPPABLE_ITEM_HASHES
+    | _NON_EQUIPPABLE_ITEM_HASHES
+    | _IGNORED_ITEM_TAGS
+    | {t.type_hash for t in ItemType}
+    | {t.value for t in AugmentTier}
+    | {AUGMENT_HASH_MARKER}
+)
+
+
 class CDragonSchema(SetDataSchema):
     """Community Dragon shape: {"setData": [{...one entry per set...}], "items": [...]}.
 
-    Augments aren't split out separately; they live in the shared "items" pool,
-    marked with AUGMENT_HASH_MARKER in their "tags".
+    Items and augments share the top-level "items" pool; each set entry lists
+    which of them are its items and which are its augments. That split is
+    taken from the set entry rather than from AUGMENT_HASH_MARKER, which
+    newer sets (e.g. TFTSet18) leave off many augments.
     """
 
     @staticmethod
@@ -89,10 +106,10 @@ class CDragonSchema(SetDataSchema):
 
     def extract(self, raw: dict, set_num: int) -> ExtractedSet:
         entry = self._set_entry(raw, set_num)
-        included_names = set(entry["items"]) | set(entry["augments"])
-        pool = [item for item in raw["items"] if item["apiName"] in included_names]
-        items = [i for i in pool if AUGMENT_HASH_MARKER not in i.get("tags", [])]
-        augments = [i for i in pool if AUGMENT_HASH_MARKER in i.get("tags", [])]
+        item_names = set(entry["items"])
+        augment_names = set(entry["augments"])
+        items = [i for i in raw["items"] if i["apiName"] in item_names]
+        augments = [i for i in raw["items"] if i["apiName"] in augment_names]
         return ExtractedSet(
             mutator=entry["mutator"],
             units=entry["champions"],
@@ -121,3 +138,6 @@ class CDragonSchema(SetDataSchema):
         if tags & _EQUIPPABLE_ITEM_HASHES:
             return item["apiName"] != "TFT16_Item_Bilgewater_BrigandsDice"
         return item["apiName"] == "TFT9_Item_CrownOfDemacia"
+
+    def unrecognized_tags(self, item: dict) -> frozenset[str]:
+        return frozenset(t for t in item.get("tags", []) if t not in _RECOGNIZED_ITEM_TAGS)

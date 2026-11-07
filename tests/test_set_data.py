@@ -532,3 +532,70 @@ def test_cdragon_set_mixing_both_component_naming_schemes():
     # A recipe mixing the two schemes counts each component once.
     assert nonzero("DA_BLOODTHIRSTER") == {"num_swords": 1, "num_cloaks": 1}
     assert nonzero("DA_GUARDIANANGEL") == {"num_swords": 1, "num_vests": 1}
+
+
+def _equippable(api_name, tags, incompatible_traits=()):
+    return {
+        "apiName": api_name,
+        "name": api_name,
+        "tags": tags,
+        "effects": {},
+        "incompatibleTraits": list(incompatible_traits),
+        "unique": False,
+        "composition": [],
+    }
+
+
+def _set_data_with_items(items):
+    raw = make_base()
+    raw["items"] = items
+    raw["setData"][0]["items"] = [i["apiName"] for i in items]
+    raw["setData"][0]["augments"] = []
+    return TFTSetData(DictDataSource(raw))
+
+
+def test_get_equippable_items_warns_about_unrecognized_tags_on_excluded_items(caplog):
+    set_data = _set_data_with_items(
+        [
+            _equippable("TFT_Item_Artifact1", ["{44ace175}", "{aaaaaaaa}"]),
+            _equippable("DA_18_Wand1", ["{5b609ae2}"]),
+            _equippable("DA_18_Wand2", ["{5b609ae2}"]),
+            _equippable("TFT_Consumable_Thing", ["Consumable"]),
+        ]
+    )
+
+    with caplog.at_level("WARNING", logger="tft_set_info_tools.set_data.set_data"):
+        items = set_data.get_equippable_items()
+
+    assert [i.api_name for i in items] == ["TFT_ITEM_ARTIFACT1"]
+    assert [r.getMessage() for r in caplog.records] == [
+        "TFTSet12: excluded items carry unrecognized tags (tag: count, e.g. item): "
+        "{5b609ae2}: 2, e.g. DA_18_Wand1"
+    ]
+
+
+def test_get_equippable_items_warns_about_emblems_without_trait(caplog):
+    set_data = _set_data_with_items(
+        [
+            _equippable("TFT12_Item_ChronoEmblem", ["{ebcd1bac}"], ["TFT12_Chrono"]),
+            _equippable("DA_18_EmblemBrawler", ["{ebcd1bac}"]),
+        ]
+    )
+
+    with caplog.at_level("WARNING", logger="tft_set_info_tools.set_data.set_data"):
+        items = set_data.get_equippable_items()
+
+    assert [i.trait_granted for i in items] == ["TFT12_Chrono", ""]
+    assert [r.getMessage() for r in caplog.records] == [
+        "TFTSet12: 1 emblem(s) have no trait_granted: DA_18_EmblemBrawler"
+    ]
+
+
+def test_get_equippable_items_logs_nothing_for_clean_data(caplog):
+    set_data = _set_data_with_items([_equippable("TFT_Item_Artifact1", ["{44ace175}"])])
+
+    with caplog.at_level("WARNING", logger="tft_set_info_tools.set_data.set_data"):
+        set_data.get_equippable_items()
+
+    assert caplog.records == []
+
