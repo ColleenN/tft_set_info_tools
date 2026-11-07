@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import os
 import sys
 import traceback
@@ -61,7 +62,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    print(args)
+    logging.basicConfig(format="%(levelname)s: %(message)s")
+    logging.getLogger("tft_set_info_tools").setLevel(logging.INFO)
     try:
         if args.env_file:
             load_env_file(args.env_file)

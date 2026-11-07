@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from types import TracebackType
 
@@ -19,6 +20,8 @@ REGISTRY: dict[str, type[TFTDataSource]] = {
     "metatft": MetaTFTDataSource,
 }
 
+logger = logging.getLogger(__name__)
+
 
 class DefaultDataSource(TFTDataSource):
     """Reads via the first working source named in a priority order.
@@ -32,6 +35,9 @@ class DefaultDataSource(TFTDataSource):
     only ever happens once per instance — TFTDataSource.read() caches the
     returned data across calls, so _read() below won't run again unless
     force=True is passed, which re-runs the whole fallback search.)
+
+    Each skipped source and the one finally read are logged at INFO on this
+    module's logger.
 
     write() is not supported, since there's no single unambiguous backend to
     write to across an ordered list of sources.
@@ -62,24 +68,30 @@ class DefaultDataSource(TFTDataSource):
             self._resolved = None
 
         errors = []
+
+        def skip(reason: str) -> None:
+            errors.append(reason)
+            logger.info("Skipping data source %s", reason)
+
         for name in self._names:
             cls = REGISTRY.get(name)
             if cls is None:
-                errors.append(f"{name!r} is not a recognized data source")
+                skip(f"{name!r}: not a recognized data source")
                 continue
             try:
                 source = cls()
                 source.__enter__()
             except ValueError as exc:
-                errors.append(f"{name!r}: not configured ({exc})")
+                skip(f"{name!r}: not configured ({exc})")
                 continue
             try:
                 data = source.read()
             except Exception as exc:
                 source.__exit__(type(exc), exc, exc.__traceback__)
-                errors.append(f"{name!r}: failed to read ({exc})")
+                skip(f"{name!r}: failed to read ({exc})")
                 continue
             self._resolved = source
+            logger.info("Read TFT set data from the %r data source", name)
             return data
 
         raise RuntimeError(
