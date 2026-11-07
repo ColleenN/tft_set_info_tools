@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import os
 import sys
 import traceback
@@ -61,7 +62,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    print(args)
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     try:
         if args.env_file:
             load_env_file(args.env_file)

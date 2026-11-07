@@ -212,3 +212,19 @@ def test_context_manager_closes_resolved_source(monkeypatch):
 
 def test_is_a_tft_data_source():
     assert issubclass(DefaultDataSource, TFTDataSource)
+
+
+def test_logs_skipped_sources_and_the_one_read(monkeypatch, tmp_path, caplog):
+    path = tmp_path / "data.json"
+    path.write_text(json.dumps({"n": 1}), encoding="utf-8")
+    monkeypatch.setenv("TFT_DATASOURCE_ORDER", "not_a_real_source,gcp,local")
+    monkeypatch.setenv("TFT_LOCAL_PATH", str(path))
+
+    with caplog.at_level("INFO", logger="tft_set_info_tools.datasource.default"):
+        DefaultDataSource().read()
+
+    messages = [record.getMessage() for record in caplog.records]
+    assert len(messages) == 3
+    assert "'not_a_real_source': not a recognized data source" in messages[0]
+    assert "'gcp': not configured" in messages[1]
+    assert messages[2] == "Read TFT set data from the 'local' data source"
