@@ -80,12 +80,19 @@ class CDragonSchema(SetDataSchema):
         return max(entry["number"] for entry in raw["setData"])
 
     def _set_entry(self, raw: dict, set_num: int) -> dict:
-        entry = next(
-            (e for e in raw["setData"] if e["number"] == set_num), None
-        )
-        if entry is None:
+        """The standard-mode entry for set_num.
+
+        setData carries several entries per set number (PAIRS, PvE, TURBO and
+        event variants alongside the standard one), in no particular order,
+        so the entry is picked by its "TFTSet<n>" mutator. Sets with no such
+        entry (e.g. set 1, which only has "TFTSetTutorial") fall back to the
+        first entry with a matching number.
+        """
+        candidates = [e for e in raw["setData"] if e["number"] == set_num]
+        if not candidates:
             raise ValueError(f"Could not locate set {set_num} in the provided data")
-        return entry
+        standard = f"TFTSet{set_num}"
+        return next((e for e in candidates if e["mutator"] == standard), candidates[0])
 
     def extract(self, raw: dict, set_num: int) -> ExtractedSet:
         entry = self._set_entry(raw, set_num)
