@@ -101,6 +101,35 @@ def test_cdragon_schema_extract():
     assert [a["apiName"] for a in extracted.augments] == ["TFT_Augment_Gold1"]
 
 
+def _variant_entry(number, mutator):
+    return {
+        "number": number,
+        "mutator": mutator,
+        "items": [],
+        "augments": [],
+        "champions": [],
+        "traits": [],
+    }
+
+
+def test_cdragon_schema_extract_prefers_standard_mutator_over_earlier_variants():
+    raw = make_cdragon_base()
+    raw["setData"].insert(0, _variant_entry(12, "TFTSet12_PVEMODE"))
+    raw["setData"].insert(1, _variant_entry(12, "TFTSet12_PAIRS"))
+
+    assert CDragonSchema().extract(raw, 12).mutator == "TFTSet12"
+
+
+def test_cdragon_schema_extract_falls_back_to_first_entry_without_standard_mutator():
+    raw = make_cdragon_base()
+    raw["setData"] = [
+        _variant_entry(1, "TFTSetTutorial"),
+        _variant_entry(1, "TFTSetTutorial_Other"),
+    ]
+
+    assert CDragonSchema().extract(raw, 1).mutator == "TFTSetTutorial"
+
+
 def test_cdragon_schema_extract_missing_set_raises():
     with pytest.raises(ValueError):
         CDragonSchema().extract(make_cdragon_base(), 999)
