@@ -558,8 +558,9 @@ def test_get_equippable_items_warns_about_unrecognized_tags_on_excluded_items(ca
     set_data = _set_data_with_items(
         [
             _equippable("TFT_Item_Artifact1", ["{44ace175}", "{aaaaaaaa}"]),
-            _equippable("DA_18_Wand1", ["{5b609ae2}"]),
-            _equippable("DA_18_Wand2", ["{5b609ae2}"]),
+            _equippable("DA_18_Mystery1", ["{0badc0de}"]),
+            _equippable("DA_18_Mystery2", ["{0badc0de}"]),
+            _equippable("DA_18_AfterShock", ["{5b609ae2}"]),
             _equippable("TFT_Consumable_Thing", ["Consumable"]),
         ]
     )
@@ -570,7 +571,7 @@ def test_get_equippable_items_warns_about_unrecognized_tags_on_excluded_items(ca
     assert [i.api_name for i in items] == ["TFT_ITEM_ARTIFACT1"]
     assert [r.getMessage() for r in caplog.records] == [
         "TFTSet12: excluded items carry unrecognized tags (tag: count, e.g. item): "
-        "{5b609ae2}: 2, e.g. DA_18_Wand1"
+        "{0badc0de}: 2, e.g. DA_18_Mystery1"
     ]
 
 

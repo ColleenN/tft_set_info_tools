@@ -125,9 +125,16 @@ def test_cdragon_schema_extract_splits_augments_by_set_entry_not_marker():
 def test_cdragon_schema_unrecognized_tags():
     schema = CDragonSchema()
     assert schema.unrecognized_tags(
-        {"apiName": "X", "tags": ["{44ace175}", "Consumable", "{ce1fd21c}", "{5b609ae2}"]}
-    ) == {"{5b609ae2}"}
+        {"apiName": "X", "tags": ["{44ace175}", "Consumable", "{ce1fd21c}", "{0badc0de}"]}
+    ) == {"{0badc0de}"}
     assert schema.unrecognized_tags({"apiName": "X"}) == frozenset()
+
+
+def test_cdragon_schema_treats_wisps_as_known_and_not_equippable():
+    schema = CDragonSchema()
+    wisp = {"apiName": "DA_18_AfterShock", "tags": ["{5b609ae2}"]}
+    assert not schema.is_equippable_item(wisp)
+    assert schema.unrecognized_tags(wisp) == frozenset()
 
 
 def test_metatft_schema_has_no_unrecognized_tags():

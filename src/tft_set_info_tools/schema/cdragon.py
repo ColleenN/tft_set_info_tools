@@ -55,7 +55,11 @@ _EQUIPPABLE_ITEM_HASHES = {
     "{b73b012f}",
 }
 
+WISP_TAG = "{5b609ae2}"
+"""Set 18's wisps, the set mechanic."""
+
 _NON_EQUIPPABLE_ITEM_HASHES = {
+    WISP_TAG,
     "Consumable",
     "TFT_Consumable_ItemRemover",
     "TFT_Consumable_ItemReroller",
