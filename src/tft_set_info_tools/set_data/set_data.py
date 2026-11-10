@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import logging
 import re
+from collections import Counter
 
 from tft_set_info_tools.datasource import CDragonDataSource, DefaultDataSource, TFTDataSource
 from tft_set_info_tools.schema import (
@@ -23,6 +25,8 @@ from tft_set_info_tools.set_data.legacy_vocab import (
     SUMMON_UNITS,
 )
 
+
+logger = logging.getLogger(__name__)
 
 # TFT Team Planner code shape: a version header, 10 champion slots, then the
 # set's mutator. Two versions are in the wild:
@@ -238,22 +242,30 @@ class TFTSetData:
         Uses `SetDataSchema.is_equippable_item()` to exclude consumables/
         markers the way the legacy tft_tools seed_gen package did, on top
         of the usual item/augment split already applied by `get_items()`.
+
+        Logs a warning for excluded items carrying tags the schema doesn't
+        recognize, and for emblems with no trait to report as trait_granted.
         """
         items = []
+        unrecognized: Counter[str] = Counter()
+        unrecognized_examples: dict[str, str] = {}
+        traitless_emblems = []
         for raw in self.get_items():
             if not self._schema.is_equippable_item(raw):
+                for tag in self._schema.unrecognized_tags(raw):
+                    unrecognized[tag] += 1
+                    unrecognized_examples.setdefault(tag, raw["apiName"])
                 continue
             item_types = self._schema.get_item_types(raw)
+            trait_granted = raw["incompatibleTraits"][0] if raw["incompatibleTraits"] else ""
+            if ItemType.EMBLEM in item_types and not trait_granted:
+                traitless_emblems.append(raw["apiName"])
             items.append(
                 Item(
                     name=raw["name"],
                     api_name=raw["apiName"].upper(),
                     effects=raw["effects"],
-                    trait_granted=(
-                        raw["incompatibleTraits"][0]
-                        if raw["incompatibleTraits"]
-                        else ""
-                    ),
+                    trait_granted=trait_granted,
                     unique=raw["unique"],
                     num_craftables=1 if raw["composition"] else 0,
                     type_counts={
@@ -262,6 +274,23 @@ class TFTSetData:
                     },
                     component_counts=self._item_component_counts(raw, item_types),
                 )
+            )
+
+        if unrecognized:
+            logger.warning(
+                "%s: excluded items carry unrecognized tags (tag: count, e.g. item): %s",
+                self.mutator,
+                ", ".join(
+                    f"{tag}: {count}, e.g. {unrecognized_examples[tag]}"
+                    for tag, count in unrecognized.most_common()
+                ),
+            )
+        if traitless_emblems:
+            logger.warning(
+                "%s: %d emblem(s) have no trait_granted: %s",
+                self.mutator,
+                len(traitless_emblems),
+                ", ".join(traitless_emblems),
             )
         return items
 
