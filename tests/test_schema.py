@@ -128,6 +128,9 @@ def test_cdragon_schema_unrecognized_tags():
         {"apiName": "X", "tags": ["{44ace175}", "Consumable", "{ce1fd21c}", "{0badc0de}"]}
     ) == {"{0badc0de}"}
     assert schema.unrecognized_tags({"apiName": "X"}) == frozenset()
+    assert schema.unrecognized_tags(
+        {"apiName": "TFT_Item_SentinelSwarm", "tags": ["{b4fe26c6}", "{ec243f6b}"]}
+    ) == frozenset()
 
 
 def test_cdragon_schema_treats_wisps_as_known_and_not_equippable():

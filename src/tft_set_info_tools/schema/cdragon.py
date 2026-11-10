@@ -72,7 +72,12 @@ _NON_EQUIPPABLE_ITEM_HASHES = {
 # Tags confirmed to carry no meaning for classification. Tags on excluded
 # items that are in neither this set nor the vocabulary above get logged by
 # TFTSetData, so add a tag here once it's been checked.
-_IGNORED_ITEM_TAGS: set[str] = set()
+_IGNORED_ITEM_TAGS = {
+    "{016eafa1}",  # Gwen's Scissors (set 16 consumable)
+    "{d02ae323}",  # TFT6_Augment_FourScore
+    "{d12ae4b6}",  # TFT6_Augment_FourScore
+    "{ec243f6b}",  # Sentinel Swarm
+}
 
 _RECOGNIZED_ITEM_TAGS = (
     _EQUIPPABLE_ITEM_HASHES
