@@ -376,6 +376,36 @@ def test_raises_when_data_does_not_match_declared_schema():
         TFTSetData(_DeclaringDataSource(make_base(), MetaTFTSchema), set_num=12)
 
 
+def make_two_set_base():
+    base = make_base(set_number=12)
+    base["setData"].append({**make_base(13, "TFTSet13")["setData"][0], "name": "Set13"})
+    return base
+
+
+def test_from_payload_builds_each_set_from_one_payload():
+    payload = make_two_set_base()
+
+    set12 = TFTSetData.from_payload(payload, set_num=12)
+    set13 = TFTSetData.from_payload(payload, set_num=13)
+
+    assert (set12.mutator, set13.mutator) == ("TFTSet12", "TFTSet13")
+    from_source = TFTSetData(DictDataSource(payload), set_num=12)
+    assert set12.get_units() == from_source.get_units()
+    assert set12.get_items() == from_source.get_items()
+
+
+def test_from_payload_defaults_to_latest_set():
+    assert TFTSetData.from_payload(make_two_set_base()).mutator == "TFTSet13"
+
+
+def test_from_payload_uses_given_schema():
+    from tft_set_info_tools.schema import CDragonSchema, MetaTFTSchema
+
+    assert TFTSetData.from_payload(make_base(), 12, CDragonSchema).mutator == "TFTSet12"
+    with pytest.raises(ValueError, match="payload"):
+        TFTSetData.from_payload(make_base(), 12, MetaTFTSchema)
+
+
 def make_cdragon_item_base():
     base = make_base()
     for item in base["items"]:
