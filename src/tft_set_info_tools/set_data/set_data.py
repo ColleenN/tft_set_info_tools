@@ -61,13 +61,38 @@ class TFTSetData:
             raw = source.read()
             expected_schema = source.get_schema()
 
+        self._load(raw, set_num, expected_schema, type(source).__name__)
+
+    @classmethod
+    def from_payload(
+        cls,
+        raw: dict,
+        set_num: int | None = None,
+        schema: type[SetDataSchema] | None = None,
+    ) -> TFTSetData:
+        """Build from a payload that's already been read, e.g. one set of many in a snapshot.
+
+        ``schema``, if given, is validated against like a source's declared
+        schema; otherwise the shape is detected from ``raw``.
+        """
+        set_data = cls.__new__(cls)
+        set_data._load(raw, set_num, schema, "payload")
+        return set_data
+
+    def _load(
+        self,
+        raw: dict,
+        set_num: int | None,
+        expected_schema: type[SetDataSchema] | None,
+        origin: str,
+    ) -> None:
         schema: SetDataSchema
         if expected_schema is not None:
             schema = expected_schema()
             try:
                 schema.validate(raw)
             except ValueError as exc:
-                raise ValueError(f"{type(source).__name__}: {exc}") from exc
+                raise ValueError(f"{origin}: {exc}") from exc
         else:
             schema = detect_schema(raw)
 
