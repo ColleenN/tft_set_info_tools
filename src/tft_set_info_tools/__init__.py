@@ -4,6 +4,7 @@ from tft_set_info_tools.datasource import (
     GCPDataSource,
     LocalDataSource,
     MetaTFTDataSource,
+    SnapshotDataSource,
     TFTDataSource,
 )
 from tft_set_info_tools.set_data import AugmentTier, ItemType, TFTSetData
@@ -18,6 +19,7 @@ __all__ = [
     "CDragonDataSource",
     "MetaTFTDataSource",
     "DefaultDataSource",
+    "SnapshotDataSource",
     "TFTSetData",
     "ItemType",
     "AugmentTier",
