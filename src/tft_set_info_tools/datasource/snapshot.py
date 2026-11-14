@@ -1,4 +1,4 @@
-"""Read-only source for one snapshot saved by tft_mirroring."""
+"""Read-only source for one gzipped snapshot stored in GCS."""
 
 from __future__ import annotations
 
@@ -10,18 +10,12 @@ from tft_set_info_tools.datasource.base import TFTDataSource
 
 
 class SnapshotDataSource(TFTDataSource):
-    """Reads one gzipped snapshot object from GCS, along with its metadata.
-
-    tft_mirroring stores each copy gzipped, with its capture details (channel,
-    cdragon-version, captured-at, sha256, ...) as GCS object metadata. After
-    read(), that metadata is available as ``metadata``.
+    """Reads one gzipped JSON object from GCS. Its GCS object metadata is
+    available as ``metadata`` after read().
 
     Pass ``client`` to share one ``google.cloud.storage.Client`` across many
     snapshots; it's left open on exit. Without one, a client is created on
     entry and closed on exit.
-
-    Like GCPDataSource, the snapshot can hold data copied from any origin, so
-    get_schema() returns None and the shape is detected at read time.
     """
 
     def __init__(self, bucket: str, object_name: str, client=None):
@@ -56,7 +50,7 @@ class SnapshotDataSource(TFTDataSource):
         return data
 
     def _write(self, data: dict) -> None:
-        raise NotImplementedError("Snapshots are written by tft_mirroring and never overwritten.")
+        raise NotImplementedError("Snapshots are read-only.")
 
     def __enter__(self) -> SnapshotDataSource:
         self._get_client()
