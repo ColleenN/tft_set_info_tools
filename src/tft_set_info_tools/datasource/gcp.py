@@ -14,6 +14,10 @@ class GCPDataSource(TFTDataSource):
 
     Bucket, blob path, and credentials are read from environment variables
     unless passed explicitly.
+
+    Pass ``client`` to share one ``google.cloud.storage.Client`` across many
+    sources; it's left open on exit. Without one, a client is created on
+    entry and closed on exit.
     """
 
     BUCKET_ENV_VAR = "TFT_GCP_BUCKET"
@@ -21,7 +25,12 @@ class GCPDataSource(TFTDataSource):
     CREDENTIALS_ENV_VAR = "TFT_GCP_CREDENTIALS"
     PROJECT_ENV_VAR = "TFT_GCP_PROJECT"
 
-    def __init__(self, bucket: str | None = None, blob_path: str | None = None):
+    def __init__(
+        self,
+        bucket: str | None = None,
+        blob_path: str | None = None,
+        client=None,
+    ):
         super().__init__()
         self._bucket_name = bucket or os.environ.get(self.BUCKET_ENV_VAR)
         self._blob_path = blob_path or os.environ.get(self.BLOB_PATH_ENV_VAR)
@@ -35,7 +44,8 @@ class GCPDataSource(TFTDataSource):
             )
         self._project = os.environ.get(self.PROJECT_ENV_VAR)
         self._credentials_path = os.environ.get(self.CREDENTIALS_ENV_VAR)
-        self._client = None
+        self._client = client
+        self._owns_client = client is None
 
     def _get_client(self):
         if self._client is None:
@@ -71,6 +81,6 @@ class GCPDataSource(TFTDataSource):
         exc_value: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
-        if self._client is not None:
+        if self._owns_client and self._client is not None:
             self._client.close()
             self._client = None

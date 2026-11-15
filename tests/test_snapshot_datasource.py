@@ -103,7 +103,7 @@ def test_shared_client_is_left_open():
 def test_own_client_is_created_and_closed(monkeypatch):
     client = snapshot_client()
     storage_module = types.ModuleType("google.cloud.storage")
-    storage_module.Client = lambda: client
+    storage_module.Client = lambda project=None: client
     cloud_module = types.ModuleType("google.cloud")
     cloud_module.storage = storage_module
     google_module = types.ModuleType("google")

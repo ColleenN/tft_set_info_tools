@@ -189,6 +189,13 @@ def test_gcp_data_source_closes_client_on_exit(fake_gcs):
     assert client.closed
 
 
+def test_gcp_data_source_leaves_shared_client_open(fake_gcs):
+    client = fake_gcs.client_cls()
+    with GCPDataSource(bucket="my-bucket", blob_path="path/to/blob", client=client) as source:
+        assert source.read() == {"champions": []}
+    assert not client.closed
+
+
 def test_cdragon_data_source_schema():
     from tft_set_info_tools.schema import CDragonSchema
 
