@@ -5,7 +5,7 @@ import types
 
 import pytest
 
-from tft_set_info_tools.datasource import SnapshotDataSource
+from tft_set_info_tools.datasource import CDragonDataSource, CDragonSnapshotDataSource, SnapshotDataSource
 
 PAYLOAD = {"items": [], "setData": [], "sets": {}}
 METADATA = {
@@ -115,3 +115,39 @@ def test_own_client_is_created_and_closed(monkeypatch):
     with SnapshotDataSource("bucket", OBJECT) as source:
         assert source.read() == PAYLOAD
     assert client.closed
+
+
+TEAM_PLANNER = {"TFTSet17": [{"character_id": "TFT17_Zilean", "team_planner_code": 1}]}
+TEAM_PLANNER_METADATA = {"channel": "pbe", "cdragon-version": "16.21.8298620"}
+TEAM_PLANNER_OBJECT = "snapshots/cdragon-teamplanner/pbe/y.json.gz"
+
+
+def paired_client():
+    client = snapshot_client()
+    client.objects[("bucket", TEAM_PLANNER_OBJECT)] = FakeBlob(
+        gzip.compress(json.dumps(TEAM_PLANNER).encode()), TEAM_PLANNER_METADATA
+    )
+    return client
+
+
+def test_cdragon_snapshot_bundles_team_planner_codes():
+    client = paired_client()
+    with CDragonSnapshotDataSource("bucket", OBJECT, TEAM_PLANNER_OBJECT, client=client) as source:
+        assert source.read() == {**PAYLOAD, CDragonDataSource.TEAM_PLANNER_CODES_KEY: TEAM_PLANNER}
+        assert source.metadata == METADATA
+        assert source.team_planner_metadata == TEAM_PLANNER_METADATA
+
+
+def test_cdragon_snapshot_without_team_planner_object():
+    client = paired_client()
+    with CDragonSnapshotDataSource("bucket", OBJECT, client=client) as source:
+        assert source.read() == PAYLOAD
+        assert source.team_planner_metadata == {}
+    assert client.requested == [("bucket", OBJECT)]
+
+
+def test_cdragon_snapshot_missing_team_planner_object_raises():
+    source = CDragonSnapshotDataSource("bucket", OBJECT, "snapshots/missing.json.gz", client=snapshot_client())
+    with source:
+        with pytest.raises(FileNotFoundError, match="snapshots/missing.json.gz"):
+            source.read()
