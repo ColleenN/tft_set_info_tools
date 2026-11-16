@@ -9,7 +9,7 @@ import sys
 import traceback
 from pathlib import Path
 
-from tft_set_info_tools.scripts import generate_seed, update_src
+from tft_set_info_tools.scripts import generate_seed, load, update_src
 
 
 def load_env_file(path: str) -> None:
@@ -56,6 +56,12 @@ def build_parser() -> argparse.ArgumentParser:
             help="Export TFT set metadata to csv seed file(s).",
         )
     )
+    load.add_arguments(
+        subparsers.add_parser(
+            "load",
+            help="Append mirrored CDragon snapshots to the BigQuery reference tables.",
+        )
+    )
 
     return parser
 
@@ -71,6 +77,8 @@ def main(argv: list[str] | None = None) -> int:
             update_src.run(args.src, args.dst, args.src_patch)
         elif args.command == "generate-seed":
             generate_seed.run(args.src, args.dst_path, args.set_num, args.type)
+        elif args.command == "load":
+            load.run(args.bucket, args.dataset, args.min_set, args.channels)
     except Exception as exc:
         print(traceback.format_exc(), file=sys.stderr)
         print(f"error: {exc}", file=sys.stderr)
