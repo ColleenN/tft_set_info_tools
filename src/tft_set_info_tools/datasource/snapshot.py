@@ -44,7 +44,7 @@ class SnapshotDataSource(GCPDataSource):
         raise NotImplementedError("Snapshots are read-only.")
 
 
-class CDragonSnapshotDataSource(SnapshotDataSource):
+class CDragonPairedSnapshotDataSource(SnapshotDataSource):
     """A CDragon data snapshot with a Team Planner snapshot bundled in, the
     way CDragonDataSource bundles the live Team Planner file.
 

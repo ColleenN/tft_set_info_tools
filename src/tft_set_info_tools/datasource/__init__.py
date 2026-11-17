@@ -6,7 +6,7 @@ from tft_set_info_tools.datasource.default import DefaultDataSource
 from tft_set_info_tools.datasource.gcp import GCPDataSource
 from tft_set_info_tools.datasource.local import LocalDataSource
 from tft_set_info_tools.datasource.metatft import MetaTFTDataSource
-from tft_set_info_tools.datasource.snapshot import CDragonSnapshotDataSource, SnapshotDataSource
+from tft_set_info_tools.datasource.snapshot import CDragonPairedSnapshotDataSource, SnapshotDataSource
 
 __all__ = [
     "TFTDataSource",
@@ -16,5 +16,5 @@ __all__ = [
     "MetaTFTDataSource",
     "DefaultDataSource",
     "SnapshotDataSource",
-    "CDragonSnapshotDataSource",
+    "CDragonPairedSnapshotDataSource",
 ]
