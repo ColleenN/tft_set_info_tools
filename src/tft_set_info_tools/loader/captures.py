@@ -1,45 +1,18 @@
-"""Listing mirrored CDragon captures and pairing them with Team Planner captures.
+"""Copies saved by tft_mirroring, from any source.
 
 tft_mirroring stores each changed copy of a target as
 ``<path>/<YYYYMMDDTHHMMSSZ>_<file name>.gz``, with GCS object metadata that
-includes ``captured-at``, ``channel`` and (for CDragon targets)
-``cdragon-version``.
-
-The Team Planner file rarely changes, so it's mirrored far less often than
-the main data file and the two captures almost never share a version. A data
-capture is paired with the newest Team Planner capture on the same channel
-taken at or before it, which is the Team Planner file that was live when the
-data was captured.
+always includes ``captured-at``, plus whatever extra fields the target's
+config adds. Subclasses expose a source's extra fields.
 """
 
 from __future__ import annotations
 
-import bisect
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from typing import TypeVar
 
-DATA_PATH = "snapshots/cdragon/{channel}"
-TEAM_PLANNER_PATH = "snapshots/cdragon-teamplanner/{channel}"
-
-
-@dataclass(frozen=True)
-class Capture:
-    bucket: str
-    object_name: str
-    channel: str
-    captured_at: datetime
-    metadata: dict[str, str] = field(default_factory=dict, compare=False, repr=False)
-
-    @property
-    def cdragon_version(self) -> str | None:
-        return self.metadata.get("cdragon-version") or None
-
-
-@dataclass(frozen=True)
-class CapturePair:
-    data: Capture
-    team_planner: Capture | None
-    """None if no Team Planner capture on the channel predates the data capture."""
+C = TypeVar("C", bound="Capture")
 
 
 def _parse_captured_at(object_name: str, metadata: dict[str, str]) -> datetime:
@@ -49,41 +22,29 @@ def _parse_captured_at(object_name: str, metadata: dict[str, str]) -> datetime:
     return datetime.strptime(stamp, "%Y%m%dT%H%M%SZ").replace(tzinfo=timezone.utc)
 
 
-def list_captures(client, bucket: str, path: str, channel: str) -> list[Capture]:
-    """Every capture under path, oldest first."""
-    captures = []
-    for blob in client.list_blobs(bucket, prefix=f"{path.rstrip('/')}/"):
+@dataclass(frozen=True, kw_only=True)
+class Capture:
+    bucket: str
+    object_name: str
+    captured_at: datetime
+    metadata: dict[str, str] = field(default_factory=dict, compare=False, repr=False)
+
+    @classmethod
+    def from_blob(cls: type[C], bucket: str, blob, **fields) -> C:
         metadata = dict(blob.metadata or {})
-        captures.append(
-            Capture(
-                bucket=bucket,
-                object_name=blob.name,
-                channel=metadata.get("channel", channel),
-                captured_at=_parse_captured_at(blob.name, metadata),
-                metadata=metadata,
-            )
+        return cls(
+            bucket=bucket,
+            object_name=blob.name,
+            captured_at=_parse_captured_at(blob.name, metadata),
+            metadata=metadata,
+            **fields,
         )
+
+
+def list_captures(client, bucket: str, path: str, capture_type: type[C] = Capture, **fields) -> list[C]:
+    """Every capture under path, oldest first. fields go to capture_type.from_blob."""
+    captures = [
+        capture_type.from_blob(bucket, blob, **fields)
+        for blob in client.list_blobs(bucket, prefix=f"{path.rstrip('/')}/")
+    ]
     return sorted(captures, key=lambda capture: capture.captured_at)
-
-
-def pair_team_planner(data: list[Capture], team_planner: list[Capture]) -> list[CapturePair]:
-    """Pair each data capture with the newest same-channel Team Planner capture at or before it."""
-    by_channel: dict[str, list[Capture]] = {}
-    for capture in sorted(team_planner, key=lambda c: c.captured_at):
-        by_channel.setdefault(capture.channel, []).append(capture)
-    times = {channel: [c.captured_at for c in caps] for channel, caps in by_channel.items()}
-
-    pairs = []
-    for capture in data:
-        candidates = by_channel.get(capture.channel, [])
-        index = bisect.bisect_right(times.get(capture.channel, []), capture.captured_at)
-        pairs.append(CapturePair(capture, candidates[index - 1] if index else None))
-    return pairs
-
-
-def list_capture_pairs(client, bucket: str, channel: str) -> list[CapturePair]:
-    """The channel's data captures, oldest first, each paired with its Team Planner capture."""
-    return pair_team_planner(
-        list_captures(client, bucket, DATA_PATH.format(channel=channel), channel),
-        list_captures(client, bucket, TEAM_PLANNER_PATH.format(channel=channel), channel),
-    )
