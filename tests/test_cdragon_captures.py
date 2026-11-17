@@ -5,6 +5,7 @@ from tft_set_info_tools.loader.captures import list_captures
 from tft_set_info_tools.loader.cdragon import (
     CDragonCapture,
     list_capture_pairs,
+    match_build,
     pair_team_planner,
 )
 
@@ -86,3 +87,36 @@ def test_list_capture_pairs_reads_both_paths():
     assert isinstance(pair.data, CDragonCapture)
     assert pair.data.object_name.startswith("snapshots/cdragon/pbe/")
     assert pair.team_planner.object_name.startswith("snapshots/cdragon-teamplanner/pbe/")
+
+
+def with_metadata(**metadata):
+    return CDragonCapture(
+        bucket="bucket",
+        object_name="x",
+        channel="live",
+        captured_at=at(10),
+        metadata={k.replace("_", "-"): v for k, v in metadata.items()},
+    )
+
+
+def test_match_build_splits_the_cdragon_build():
+    assert match_build("16.21.8298620+branch.releases-16-21.content.release") == "16.21.829.8620"
+    assert match_build("16.22.8312345") == "16.22.831.2345"
+
+
+def test_match_build_of_an_unparseable_version_is_none():
+    assert match_build(None) is None
+    assert match_build("latest") is None
+    assert match_build("16.21.12") is None
+
+
+def test_build():
+    assert with_metadata(cdragon_version="16.21.8298620+branch").build == "16.21.829.8620"
+    assert with_metadata().build is None
+
+
+def test_cdragon_status():
+    assert with_metadata(cdragon_status="2026-10-26T09:00:03Z done").cdragon_status_done is True
+    assert with_metadata(cdragon_status="2026-10-26T08:40:00Z running").cdragon_status_done is False
+    assert with_metadata().cdragon_status is None
+    assert with_metadata().cdragon_status_done is None
