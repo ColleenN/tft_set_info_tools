@@ -28,3 +28,10 @@ Allowed values:
   - "units"
   - "unit_innate_traits"
   - "augments"
+`load` - append mirrored Community Dragon snapshots to the BigQuery reference tables. The scheduled loader job runs this from the image built by `cloudbuild.yaml`. Loading itself isn't implemented yet; the command checks its settings and then exits with an error.
+
+Each option falls back to an environment variable, so the job can keep its settings in a file passed with `--env-file`:
+- `--bucket` / `TFT_LOADER_BUCKET`: bucket holding the snapshots. Required.
+- `--dataset` / `TFT_LOADER_DATASET`: BigQuery dataset for the reference tables, as `[project.]dataset`. Required.
+- `--min-set` / `TFT_LOADER_MIN_SET`: lowest set number to load. Required.
+- `--channels` / `TFT_LOADER_CHANNELS`: comma-separated channels. Defaults to `live,pbe`.
