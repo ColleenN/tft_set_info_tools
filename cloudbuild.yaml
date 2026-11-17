@@ -18,7 +18,7 @@ steps:
     entrypoint: sh
     args:
       - -c
-      - pip install --quiet ".[dev]" && pytest
+      - pip install --quiet ".[dev,gcp]" && pytest
 
   - id: build
     name: gcr.io/cloud-builders/docker
