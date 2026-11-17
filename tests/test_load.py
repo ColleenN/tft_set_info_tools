@@ -61,8 +61,3 @@ def test_cli_reads_settings_from_the_env_file(tmp_path, monkeypatch):
 
     assert main(["--env-file", str(env_file), "load", "--channels", "pbe"]) == 0
     assert seen == [LoadConfig("bucket", "tft_reference", 17, ("pbe",))]
-
-
-def test_cli_fails_until_the_loader_exists(capsys):
-    assert main(["load", "--bucket", "b", "--dataset", "d", "--min-set", "17"]) == 1
-    assert "S5" in capsys.readouterr().err

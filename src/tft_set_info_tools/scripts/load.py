@@ -15,6 +15,7 @@ BUCKET_ENV_VAR = "TFT_LOADER_BUCKET"
 DATASET_ENV_VAR = "TFT_LOADER_DATASET"
 MIN_SET_ENV_VAR = "TFT_LOADER_MIN_SET"
 CHANNELS_ENV_VAR = "TFT_LOADER_CHANNELS"
+PROJECT_ENV_VAR = "TFT_GCP_PROJECT"
 DEFAULT_CHANNELS = ("live", "pbe")
 
 
@@ -75,7 +76,22 @@ def resolve_config(
 
 
 def load(config: LoadConfig) -> None:
-    raise NotImplementedError("loading snapshots into BigQuery isn't implemented yet (S5)")
+    from google.cloud import bigquery, storage
+
+    from tft_set_info_tools.loader.run import load_snapshots
+
+    project = os.environ.get(PROJECT_ENV_VAR)
+    with storage.Client(project=project) as storage_client, bigquery.Client(project=project) as bigquery_client:
+        result = load_snapshots(
+            storage_client,
+            bigquery_client,
+            config.bucket,
+            config.dataset,
+            config.min_set,
+            config.channels,
+        )
+    if result.failed:
+        raise RuntimeError(f"{len(result.failed)} capture(s) failed to load: {', '.join(result.failed)}")
 
 
 def run(

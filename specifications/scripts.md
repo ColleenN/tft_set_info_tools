@@ -28,7 +28,13 @@ Allowed values:
   - "units"
   - "unit_innate_traits"
   - "augments"
-`load` - append mirrored Community Dragon snapshots to the BigQuery reference tables. The scheduled loader job runs this from the image built by `cloudbuild.yaml`. Loading itself isn't implemented yet; the command checks its settings and then exits with an error.
+`load` - append mirrored Community Dragon snapshots to the BigQuery reference tables. The scheduled loader job runs this from the image built by `cloudbuild.yaml`.
+
+Each run loads every capture under `snapshots/cdragon/<channel>/` that isn't in the dataset's `loaded_captures` table yet, paired with its Team Planner capture. For each set from `--min-set` up (standard mode only), the reference table generators' rows are appended with version columns: `channel`, `build` (in match-record form, e.g. `16.21.829.8620`), `cdragon_version`, `cdragon_status`, `captured_at`, `source_object`, `set_number` and `mutator`. Tables are created if missing.
+
+- A capture whose CDragon status wasn't `done` is recorded as skipped. Captures saved before the mirror recorded a status are loaded with a NULL `cdragon_status`.
+- A capture that fails is retried on the next run; the command exits with an error after trying the rest. Rows left by a capture that failed partway are deleted before it's loaded again.
+- Credentials come from application default credentials; `TFT_GCP_PROJECT` sets the project if needed.
 
 Each option falls back to an environment variable, so the job can keep its settings in a file passed with `--env-file`:
 - `--bucket` / `TFT_LOADER_BUCKET`: bucket holding the snapshots. Required.
