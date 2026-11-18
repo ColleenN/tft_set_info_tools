@@ -205,6 +205,32 @@ class TFTSetData:
                 ) from None
         return units
 
+    def get_team_planner_ids(self) -> tuple[int, dict[str, int]]:
+        """The Team Planner code version this set's champion IDs belong to,
+        and each shop unit's ID keyed by apiName.
+
+        Version 2 IDs come from the champion-code data `CDragonDataSource`
+        bundles in, when it has an entry for this set's mutator. Otherwise the
+        IDs are version 1's, from `get_team_planner_champion_order()`.
+        """
+        if self.mutator in self._team_planner_codes:
+            lookup = self._team_planner_v2_lookup(self.mutator)
+            return 2, {unit["apiName"]: code for code, unit in lookup.items()}
+        order = self.get_team_planner_champion_order()
+        return 1, {unit["apiName"]: champ_id for champ_id, unit in enumerate(order, start=1)}
+
+    def get_item_types(self, item: dict) -> frozenset[ItemType]:
+        """Every ItemType a raw item from `get_items()` belongs to."""
+        return self._schema.get_item_types(item)
+
+    def is_equippable_item(self, item: dict) -> bool:
+        """Whether a raw item from `get_items()` is real equippable gear."""
+        return self._schema.is_equippable_item(item)
+
+    def get_augment_tier(self, augment: dict) -> AugmentTier | None:
+        """The tier of a raw augment from `get_augments()`, if it has a known one."""
+        return self._schema.get_augment_tier(augment)
+
     def get_augments(self, tier: AugmentTier | None = None) -> list[dict]:
         augments = self._extracted.augments
         if tier is not None:
