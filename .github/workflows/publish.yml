@@ -1,0 +1,50 @@
+# Publishes the package to the project's Python registry when a version tag
+# (v<version from pyproject.toml>) is pushed. Authenticates to Google Cloud
+# with workload identity federation, so no key is stored in the repo.
+name: Publish
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  GCP_REGION: us-central1
+  WORKLOAD_IDENTITY_PROVIDER: projects/869448494473/locations/global/workloadIdentityPools/github/providers/github
+  SERVICE_ACCOUNT: python-publisher@tft-data-463022.iam.gserviceaccount.com
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check the tag matches the package version
+        run: |
+          version=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          if [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match pyproject.toml version $version"
+            exit 1
+          fi
+
+      - name: Test
+        run: |
+          pip install -e ".[dev]"
+          pytest
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+
+      - name: Build and upload
+        run: |
+          pip install twine keyring keyrings.google-artifactregistry-auth
+          make publish GCP_REGION="$GCP_REGION"
