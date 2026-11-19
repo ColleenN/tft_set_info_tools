@@ -27,6 +27,13 @@ EMBLEM = {
     "tags": ["{ebcd1bac}"],
     "unique": True,
 }
+NAMED_EMBLEM = {
+    "apiName": "TFT12_Item_NamedEmblem",
+    "name": "Chrono Emblem",
+    "composition": ["TFT_Item_Spatula", "TFT_Item_ChainVest"],
+    "incompatibleTraits": [],
+    "tags": ["{ebcd1bac}"],
+}
 WISP = {"apiName": "TFT12_Wisp", "name": "Wisp", "tags": ["{5b609ae2}"]}
 AUGMENT = {
     "apiName": "TFT12_Augment_ChronoCrest",
@@ -70,7 +77,7 @@ CHRONO = {
 
 def make_raw(team_planner_codes=None):
     raw = {
-        "items": [SWORD, EDGE, EMBLEM, WISP, AUGMENT],
+        "items": [SWORD, EDGE, EMBLEM, NAMED_EMBLEM, WISP, AUGMENT],
         "setData": [
             {
                 "number": 12,
@@ -79,6 +86,7 @@ def make_raw(team_planner_codes=None):
                     "TFT_Item_BFSword",
                     "TFT_Item_InfinityEdge",
                     "TFT12_Item_ChronoEmblem",
+                    "TFT12_Item_NamedEmblem",
                     "TFT12_Wisp",
                 ],
                 "augments": ["TFT12_Augment_ChronoCrest"],
@@ -166,7 +174,12 @@ def test_traits_keep_icon_desc_and_every_tier():
 def test_items_are_equippable_with_recipes_and_types():
     items = {i["api_name"]: i for i in bundle(make_raw())["items"]}
 
-    assert set(items) == {"TFT_Item_BFSword", "TFT_Item_InfinityEdge", "TFT12_Item_ChronoEmblem"}
+    assert set(items) == {
+        "TFT_Item_BFSword",
+        "TFT_Item_InfinityEdge",
+        "TFT12_Item_ChronoEmblem",
+        "TFT12_Item_NamedEmblem",
+    }
     assert items["TFT_Item_BFSword"]["types"] == ["component"]
     assert items["TFT_Item_BFSword"]["composition"] == []
     assert items["TFT_Item_InfinityEdge"] == {
@@ -183,6 +196,13 @@ def test_items_are_equippable_with_recipes_and_types():
     assert items["TFT12_Item_ChronoEmblem"]["types"] == ["emblem"]
     assert items["TFT12_Item_ChronoEmblem"]["trait_granted"] == "TFT12_Chrono"
     assert items["TFT12_Item_ChronoEmblem"]["unique"] is True
+
+
+def test_emblems_without_incompatible_traits_match_a_trait_by_name():
+    items = {i["api_name"]: i for i in bundle(make_raw())["items"]}
+
+    assert items["TFT12_Item_NamedEmblem"]["trait_granted"] == "TFT12_Chrono"
+    assert items["TFT_Item_InfinityEdge"]["trait_granted"] is None
 
 
 def test_augments_carry_tier_and_associated_traits():

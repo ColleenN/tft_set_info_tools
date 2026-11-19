@@ -14,6 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Literal
 
+from tft_set_info_tools.schema import ItemType
 from tft_set_info_tools.set_data.set_data import TFTSetData
 
 
@@ -95,6 +96,7 @@ def build_set_bundle(set_data: TFTSetData) -> SetBundle:
     """The set's champions, traits, equippable items and augments."""
     team_planner_version, team_planner_ids = set_data.get_team_planner_ids()
     trait_api_names = {trait["name"]: trait["apiName"] for trait in set_data.get_traits()}
+    emblem_traits = {f"{name} Emblem": api_name for name, api_name in trait_api_names.items()}
     return SetBundle(
         mutator=set_data.mutator,
         team_planner_version=team_planner_version,
@@ -102,7 +104,11 @@ def build_set_bundle(set_data: TFTSetData) -> SetBundle:
             _champion(unit, trait_api_names, team_planner_ids) for unit in set_data.get_shop_units()
         ],
         traits=[_trait(trait) for trait in set_data.get_traits()],
-        items=[_item(item, set_data) for item in set_data.get_items() if set_data.is_equippable_item(item)],
+        items=[
+            _item(item, set_data, emblem_traits)
+            for item in set_data.get_items()
+            if set_data.is_equippable_item(item)
+        ],
         augments=[_augment(augment, set_data) for augment in set_data.get_augments()],
     )
 
@@ -147,17 +153,24 @@ def _trait(trait: dict) -> BundleTrait:
     )
 
 
-def _item(item: dict, set_data: TFTSetData) -> BundleItem:
+def _item(item: dict, set_data: TFTSetData, emblem_traits: dict[str, str]) -> BundleItem:
+    """trait_granted comes from incompatibleTraits. Some sets (e.g. Set 18)
+    leave that empty on emblems, so an emblem falls back to the trait whose
+    name plus " Emblem" is the item's name."""
+    types = set_data.get_item_types(item)
     incompatible = item.get("incompatibleTraits") or []
+    trait_granted = incompatible[0] if incompatible else None
+    if trait_granted is None and ItemType.EMBLEM in types:
+        trait_granted = emblem_traits.get(item["name"])
     return BundleItem(
         api_name=item["apiName"],
         name=item["name"],
         desc=item.get("desc"),
         icon=item.get("icon"),
-        types=sorted(t.type_name for t in set_data.get_item_types(item)),
+        types=sorted(t.type_name for t in types),
         composition=list(item.get("composition") or []),
         unique=bool(item.get("unique")),
-        trait_granted=incompatible[0] if incompatible else None,
+        trait_granted=trait_granted,
         effects=item.get("effects") or {},
     )
 
