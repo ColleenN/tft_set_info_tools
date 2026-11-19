@@ -1,4 +1,7 @@
 import json
+from dataclasses import FrozenInstanceError, asdict
+
+import pytest
 
 from tests.conftest import DictDataSource
 from tft_set_info_tools.datasource import CDragonDataSource
@@ -90,7 +93,8 @@ def make_raw(team_planner_codes=None):
 
 
 def bundle(raw):
-    return build_set_bundle(TFTSetData(DictDataSource(raw), set_num=12))
+    """The bundle as plain dicts, the way it's serialized."""
+    return asdict(build_set_bundle(TFTSetData(DictDataSource(raw), set_num=12)))
 
 
 def test_champions_are_shop_units_with_icons_ability_and_trait_api_names():
@@ -200,3 +204,10 @@ def test_bundle_is_json_serializable():
 
     assert json.loads(json.dumps(result)) == result
     assert result["mutator"] == "TFTSet12"
+
+
+def test_bundle_records_are_frozen():
+    result = build_set_bundle(TFTSetData(DictDataSource(make_raw()), set_num=12))
+
+    with pytest.raises(FrozenInstanceError):
+        result.champions[0].cost = 5

@@ -37,11 +37,11 @@ Properties:
 
 ## bundle
 
-`def build_set_bundle(set_data: TFTSetData) -> dict`: The set's data in one JSON-ready dict, for a UI. Keeps what the normalized getters drop: icon paths, ability names, text and variables, item recipes, trait tiers and Team Planner IDs. Api names, icon paths and description strings pass through as the source has them, and records refer to each other by api name.
+`def build_set_bundle(set_data: TFTSetData) -> SetBundle`: The set's data as frozen dataclasses, for a UI. `dataclasses.asdict()` turns it into plain JSON types. Keeps what the normalized getters drop: icon paths, ability names, text and variables, item recipes, trait tiers and Team Planner IDs. Api names, icon paths and description strings pass through as the source has them, and records refer to each other by api name.
 
 * `mutator`
 * `team_planner_version`: 1 or 2, the version `team_planner_id` values belong to.
-* `champions`: shop units, each with `api_name`, `name`, `cost`, `role`, `traits` (trait api names), `icon`, `square_icon`, `tile_icon`, `ability` (`name`, `desc`, `icon`, `variables` as name to per-star values), `stats` and `team_planner_id`.
-* `traits`: `api_name`, `name`, `desc`, `icon` and `tiers` (`min_units`, `max_units`, `style` as the raw numeric code, `variables`).
-* `items`: equippable items only, each with `api_name`, `name`, `desc`, `icon`, `types` (`ItemType.type_name` values, sorted), `composition` (component api names), `unique`, `trait_granted` and `effects`.
-* `augments`: `api_name`, `name`, `desc`, `icon`, `tier` (`silver`/`gold`/`prismatic` or null), `associated_traits` and `effects`.
+* `champions` (`BundleChampion`): shop units, each with `api_name`, `name`, `cost`, `role`, `traits` (trait api names), `icon`, `square_icon`, `tile_icon`, `ability` (`BundleAbility`: `name`, `desc`, `icon`, `variables` as name to per-star values), `stats` and `team_planner_id`.
+* `traits` (`BundleTrait`): `api_name`, `name`, `desc`, `icon` and `tiers` (`BundleTraitTier`: `min_units`, `max_units`, `style` as the raw numeric code, `variables`).
+* `items` (`BundleItem`): equippable items only, each with `api_name`, `name`, `desc`, `icon`, `types` (`ItemType.type_name` values, sorted), `composition` (component api names), `unique`, `trait_granted` and `effects`.
+* `augments` (`BundleAugment`): `api_name`, `name`, `desc`, `icon`, `tier` (`silver`/`gold`/`prismatic` or null), `associated_traits` and `effects`.
