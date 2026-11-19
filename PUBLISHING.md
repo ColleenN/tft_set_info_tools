@@ -1,5 +1,21 @@
 # Publishing `tft_set_info_tools` to GCP Artifact Registry
 
+## Releasing
+
+Bump `version` in `pyproject.toml` (and `__version__` in `src/tft_set_info_tools/__init__.py`),
+merge it to main, then tag that commit and push the tag:
+
+```bash
+git tag v0.3.0
+git push origin v0.3.0
+```
+
+The `Publish` workflow (`.github/workflows/publish.yml`) checks the tag matches the version, runs
+the tests, and runs `make publish`. It authenticates with workload identity federation as the
+`python-publisher` service account, so nothing is stored in the repo.
+
+The rest of this document covers the one-time registry setup and publishing by hand.
+
 ## 1. Deploy the Python registry (Terraform)
 
 Infra is defined in `D:\CODE_REPOS\tft_data_infra\terraform`. A `google_artifact_registry_repository`
