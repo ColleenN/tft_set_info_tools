@@ -11,10 +11,28 @@ from tft_set_info_tools.schema import (
     Unit,
     UnitTrait,
 )
+from tft_set_info_tools.set_data.bundle import (
+    BundleAbility,
+    BundleAugment,
+    BundleChampion,
+    BundleItem,
+    BundleTrait,
+    BundleTraitTier,
+    SetBundle,
+    build_set_bundle,
+)
 from tft_set_info_tools.set_data.set_data import TFTSetData
 
 __all__ = [
     "TFTSetData",
+    "build_set_bundle",
+    "SetBundle",
+    "BundleAbility",
+    "BundleAugment",
+    "BundleChampion",
+    "BundleItem",
+    "BundleTrait",
+    "BundleTraitTier",
     "ItemType",
     "AugmentTier",
     "Component",

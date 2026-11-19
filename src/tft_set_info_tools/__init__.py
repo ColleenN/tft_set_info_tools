@@ -9,7 +9,7 @@ from tft_set_info_tools.datasource import (
 )
 from tft_set_info_tools.set_data import AugmentTier, ItemType, TFTSetData
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "__version__",

@@ -29,6 +29,19 @@ Methods:
 * `def get_equippable_items(self) -> list[Item]`: Equippable items, normalized/filtered per the legacy `tft_tools` seed CSV schema (see `Item` in `schema.md`). The inclusion filter (`SetDataSchema.is_equippable_item()`) and component-composition parsing (`SetDataSchema.get_component()`) are polymorphic, so this produces rows for any registered schema -- though see the `MetaTFTSchema.is_equippable_item()` caveat in `schema.md`.
 * `def get_normalized_units(self) -> list[Unit]`: Shop units plus known summon units, normalized per the legacy seed CSV schema (see `Unit` in `schema.md`).
 * `def get_normalized_unit_traits(self) -> list[UnitTrait]`: Every unit's innate traits, joined to each trait's api name (see `UnitTrait` in `schema.md`).
+* `def get_team_planner_ids(self) -> tuple[int, dict[str, int]]`: The Team Planner code version the set's champion IDs belong to, and each shop unit's ID keyed by `apiName`. Version 2 when the source bundles Team Planner champion codes for this mutator, otherwise version 1 (from `get_team_planner_champion_order()`).
+* `def get_item_types(self, item: dict) -> frozenset[ItemType]`, `def is_equippable_item(self, item: dict) -> bool`, `def get_augment_tier(self, augment: dict) -> AugmentTier | None`: Classify a raw item or augment from `get_items()`/`get_augments()` using the set's schema.
 
 Properties:
 * `def mutator(self) -> str`: Returns the set's "mutator", its unique identifier in the data source.
+
+## bundle
+
+`def build_set_bundle(set_data: TFTSetData) -> SetBundle`: The set's data as frozen dataclasses, for a UI. `dataclasses.asdict()` turns it into plain JSON types. Keeps what the normalized getters drop: icon paths, ability names, text and variables, item recipes, trait tiers and Team Planner IDs. Api names, icon paths and description strings pass through as the source has them, and records refer to each other by api name.
+
+* `mutator`
+* `team_planner_version`: 1 or 2, the version `team_planner_id` values belong to.
+* `champions` (`BundleChampion`): shop units, each with `api_name`, `name`, `cost`, `role`, `traits` (trait api names), `icon`, `square_icon`, `tile_icon`, `ability` (`BundleAbility`: `name`, `desc`, `icon`, `variables` as name to per-star values), `stats` and `team_planner_id`.
+* `traits` (`BundleTrait`): `api_name`, `name`, `desc`, `icon` and `tiers` (`BundleTraitTier`: `min_units`, `max_units`, `style` as the raw numeric code, `variables`).
+* `items` (`BundleItem`): equippable items only, each with `api_name`, `name`, `desc`, `icon`, `types` (`ItemType.type_name` values, sorted), `composition` (component api names), `unique`, `trait_granted` and `effects`.
+* `augments` (`BundleAugment`): `api_name`, `name`, `desc`, `icon`, `tier` (`silver`/`gold`/`prismatic` or null), `associated_traits` and `effects`.
