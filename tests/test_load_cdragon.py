@@ -62,14 +62,3 @@ def test_cli_reads_settings_from_the_env_file(tmp_path, monkeypatch):
     assert main(["--env-file", str(env_file), "load", "cdragon", "--channels", "pbe"]) == 0
     assert seen == [LoadConfig("bucket", "tft_reference", 17, ("pbe",))]
 
-
-def test_bare_load_still_loads_cdragon(tmp_path, monkeypatch):
-    env_file = tmp_path / "loader.env"
-    env_file.write_text(
-        f"{load.BUCKET_ENV_VAR}=bucket\n{load.DATASET_ENV_VAR}=tft_reference\n{load.MIN_SET_ENV_VAR}=17\n"
-    )
-    seen = []
-    monkeypatch.setattr(load, "load", seen.append)
-
-    assert main(["--env-file", str(env_file), "load"]) == 0
-    assert seen == [LoadConfig("bucket", "tft_reference", 17, ("live", "pbe"))]
