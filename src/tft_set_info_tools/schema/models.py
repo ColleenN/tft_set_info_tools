@@ -36,6 +36,7 @@ class Augment:
     name: str
     api_name: str
     tier: AugmentTier | None
+    desc: str | None
     effects: dict
 
 
@@ -51,6 +52,7 @@ class Item:
 
     name: str
     api_name: str
+    desc: str | None
     effects: dict
     trait_granted: str
     unique: bool

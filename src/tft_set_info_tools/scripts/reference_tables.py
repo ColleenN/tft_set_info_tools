@@ -49,6 +49,7 @@ def _items(set_data: TFTSetData) -> list[dict]:
         {
             "item_name": item.name,
             "item_api_name": item.api_name,
+            "desc": item.desc,
             "effects": item.effects,
             "trait_granted": item.trait_granted,
             "unique": item.unique,
@@ -86,6 +87,7 @@ def _augments(set_data: TFTSetData) -> list[dict]:
             "item_name": augment.name,
             "item_api_name": augment.api_name,
             "tier": augment.tier.name if augment.tier is not None else None,
+            "desc": augment.desc,
             "effects": augment.effects,
         }
         for augment in set_data.get_normalized_augments()
@@ -136,6 +138,7 @@ REFERENCE_TABLES: dict[str, ReferenceTable] = {
         {
             "item_name": "STRING",
             "item_api_name": "STRING",
+            "desc": "STRING",
             "effects": "JSON",
             "trait_granted": "STRING",
             "unique": "BOOL",
@@ -152,7 +155,13 @@ REFERENCE_TABLES: dict[str, ReferenceTable] = {
         _item_components,
     ),
     "augments": ReferenceTable(
-        {"item_name": "STRING", "item_api_name": "STRING", "tier": "STRING", "effects": "JSON"},
+        {
+            "item_name": "STRING",
+            "item_api_name": "STRING",
+            "tier": "STRING",
+            "desc": "STRING",
+            "effects": "JSON",
+        },
         _augments,
     ),
     "units": ReferenceTable(

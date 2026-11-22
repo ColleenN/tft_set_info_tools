@@ -257,6 +257,7 @@ class TFTSetData:
                 name=raw["name"],
                 api_name=raw["apiName"].upper(),
                 tier=self._schema.get_augment_tier(raw),
+                desc=raw.get("desc"),
                 effects=raw["effects"],
             )
             for raw in self.get_augments()
@@ -303,6 +304,7 @@ class TFTSetData:
                 Item(
                     name=raw["name"],
                     api_name=raw["apiName"].upper(),
+                    desc=raw.get("desc"),
                     effects=raw["effects"],
                     trait_granted=trait_granted,
                     unique=raw["unique"],

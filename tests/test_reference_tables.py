@@ -11,6 +11,9 @@ def set_data():
     base = make_full_base()
     # Units carrying different stats would add different seed columns.
     base["setData"][0]["champions"][1]["stats"] = {"hp": 1000.0, "armor": 40.0}
+    items = {item["apiName"]: item for item in base["items"]}
+    items["TFT_Item_GuinsoosRageblade"]["desc"] = "Attacks grant stacking Attack Speed."
+    items["TFT_Augment_TestAugment"]["desc"] = "Gain 2 gold."
     return TFTSetData(DictDataSource(base), set_num=12)
 
 
@@ -69,3 +72,14 @@ def test_json_columns_hold_parsed_values(set_data):
     assert tier["tier_variables"] == {}
     assert augment["effects"] == {"x": 1}
     assert augment["tier"] == "SILVER"
+
+
+def test_items_and_augments_carry_their_description(set_data):
+    items = {r["item_api_name"]: r["desc"] for r in rows(set_data, "items")}
+    augment = rows(set_data, "augments")[0]
+
+    assert items == {
+        "TFT_ITEM_RECURVEBOW": None,
+        "TFT_ITEM_GUINSOOSRAGEBLADE": "Attacks grant stacking Attack Speed.",
+    }
+    assert augment["desc"] == "Gain 2 gold."
