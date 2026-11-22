@@ -1,8 +1,8 @@
 import pytest
 
-from tft_set_info_tools.scripts import load
+from tft_set_info_tools.scripts import load_cdragon as load
 from tft_set_info_tools.scripts.cli import main
-from tft_set_info_tools.scripts.load import LoadConfig, resolve_config
+from tft_set_info_tools.scripts.load_cdragon import LoadConfig, resolve_config
 
 ENV_VARS = (load.BUCKET_ENV_VAR, load.DATASET_ENV_VAR, load.MIN_SET_ENV_VAR, load.CHANNELS_ENV_VAR)
 
@@ -59,5 +59,17 @@ def test_cli_reads_settings_from_the_env_file(tmp_path, monkeypatch):
     seen = []
     monkeypatch.setattr(load, "load", seen.append)
 
-    assert main(["--env-file", str(env_file), "load", "--channels", "pbe"]) == 0
+    assert main(["--env-file", str(env_file), "load", "cdragon", "--channels", "pbe"]) == 0
     assert seen == [LoadConfig("bucket", "tft_reference", 17, ("pbe",))]
+
+
+def test_bare_load_still_loads_cdragon(tmp_path, monkeypatch):
+    env_file = tmp_path / "loader.env"
+    env_file.write_text(
+        f"{load.BUCKET_ENV_VAR}=bucket\n{load.DATASET_ENV_VAR}=tft_reference\n{load.MIN_SET_ENV_VAR}=17\n"
+    )
+    seen = []
+    monkeypatch.setattr(load, "load", seen.append)
+
+    assert main(["--env-file", str(env_file), "load"]) == 0
+    assert seen == [LoadConfig("bucket", "tft_reference", 17, ("live", "pbe"))]

@@ -1,6 +1,6 @@
 import logging
 
-from tft_set_info_tools.loader.sets import sets_to_load
+from tft_set_info_tools.loaders.cdragon.sets import sets_to_load
 
 
 def payload(*mutators_by_number):

@@ -5,7 +5,7 @@ import pytest
 
 bigquery = pytest.importorskip("google.cloud.bigquery")
 
-from tft_set_info_tools.loader.bigquery import (  # noqa: E402
+from tft_set_info_tools.loaders.cdragon.bigquery import (  # noqa: E402
     LOADED,
     LOADED_CAPTURES_TABLE,
     VERSION_COLUMNS,

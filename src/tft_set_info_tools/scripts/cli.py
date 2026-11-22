@@ -59,7 +59,7 @@ def build_parser() -> argparse.ArgumentParser:
     load.add_arguments(
         subparsers.add_parser(
             "load",
-            help="Append mirrored CDragon snapshots to the BigQuery reference tables.",
+            help="Append a source's mirrored copies to BigQuery.",
         )
     )
 
@@ -78,7 +78,7 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "generate-seed":
             generate_seed.run(args.src, args.dst_path, args.set_num, args.type)
         elif args.command == "load":
-            load.run(args.bucket, args.dataset, args.min_set, args.channels)
+            load.run(args)
     except Exception as exc:
         print(traceback.format_exc(), file=sys.stderr)
         print(f"error: {exc}", file=sys.stderr)

@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from tests.fake_storage import FakeBlob, FakeClient
-from tft_set_info_tools.loader.captures import Capture, list_captures
+from tft_set_info_tools.loaders.captures import Capture, list_captures
 
 
 def at(day, hour=0, minute=0):

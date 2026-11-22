@@ -16,7 +16,7 @@ import bisect
 import re
 from dataclasses import dataclass
 
-from tft_set_info_tools.loader.captures import Capture, list_captures
+from tft_set_info_tools.loaders.captures import Capture, list_captures
 
 DATA_PATH = "snapshots/cdragon/{channel}"
 TEAM_PLANNER_PATH = "snapshots/cdragon-teamplanner/{channel}"
