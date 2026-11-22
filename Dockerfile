@@ -1,5 +1,5 @@
-# Image for the scheduled snapshot loader. Runs `tft-scripts`; the job passes
-# its arguments (e.g. `--env-file /job-configs/loader/loader.env load`).
+# Image for the scheduled loader jobs. Runs `tft-scripts`; each job passes its
+# arguments (e.g. `--env-file /job-configs/loaders/cdragon.env load cdragon`).
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \

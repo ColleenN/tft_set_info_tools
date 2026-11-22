@@ -16,9 +16,9 @@ import logging
 from dataclasses import dataclass, field
 
 from tft_set_info_tools.datasource import CDragonPairedSnapshotDataSource
-from tft_set_info_tools.loader.bigquery import LOADED, SKIPPED, ReferenceWriter
-from tft_set_info_tools.loader.cdragon import CapturePair, list_capture_pairs
-from tft_set_info_tools.loader.sets import sets_to_load
+from tft_set_info_tools.loaders.cdragon.bigquery import LOADED, SKIPPED, ReferenceWriter
+from tft_set_info_tools.loaders.cdragon.captures import CapturePair, list_capture_pairs
+from tft_set_info_tools.loaders.cdragon.sets import sets_to_load
 from tft_set_info_tools.scripts.reference_tables import REFERENCE_TABLES
 from tft_set_info_tools.set_data import TFTSetData
 

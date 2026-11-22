@@ -5,7 +5,7 @@ import pytest
 
 pytest.importorskip("google.cloud.bigquery")
 
-from tft_set_info_tools.loader.run import load_snapshots  # noqa: E402
+from tft_set_info_tools.loaders.cdragon.run import load_snapshots  # noqa: E402
 from tests.test_bigquery import FakeClient as FakeBigQuery  # noqa: E402
 
 

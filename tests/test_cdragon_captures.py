@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
 
 from tests.fake_storage import FakeBlob, FakeClient
-from tft_set_info_tools.loader.captures import list_captures
-from tft_set_info_tools.loader.cdragon import (
+from tft_set_info_tools.loaders.captures import list_captures
+from tft_set_info_tools.loaders.cdragon.captures import (
     CDragonCapture,
     list_capture_pairs,
     match_build,

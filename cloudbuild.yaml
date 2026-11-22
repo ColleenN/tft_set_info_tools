@@ -1,4 +1,4 @@
-# Builds the snapshot loader image and pushes it to a Docker registry in
+# Builds the loader jobs' image and pushes it to a Docker registry in
 # Artifact Registry. Tests run first, so a failing test stops the push.
 #
 # _REGION and _REGISTRY have no defaults here; the Cloud Build trigger
