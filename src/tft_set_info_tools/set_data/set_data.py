@@ -121,8 +121,21 @@ class TFTSetData:
     def get_units(self) -> list[dict]:
         return self._extracted.units
 
+    @staticmethod
+    def is_shop_unit(unit: dict) -> bool:
+        """Whether a unit can appear in the shop.
+
+        Uses the unit's ``shopUnit`` flag when the data has one: the Unreal
+        client exports set it from the set's champions table, which leaves out
+        alternate forms and hero-augment overrides that still carry traits.
+        CDragon's old export has no flag and gives non-shop units no traits.
+        """
+        if "shopUnit" in unit:
+            return bool(unit["shopUnit"])
+        return len(unit.get("traits", [])) > 0
+
     def get_shop_units(self) -> list[dict]:
-        return [c for c in self.get_units() if len(c.get("traits", [])) > 0]
+        return [c for c in self.get_units() if self.is_shop_unit(c)]
 
     def get_team_planner_champion_order(self) -> list[dict]:
         """Shop units in Team Planner champion-ID order.
@@ -325,7 +338,8 @@ class TFTSetData:
         units = []
         for champ in self.get_units():
             has_traits = len(champ.get("traits", [])) > 0
-            if not (has_traits or champ["apiName"] in SUMMON_UNITS):
+            shop_unit = self.is_shop_unit(champ)
+            if not (shop_unit or has_traits or champ["apiName"] in SUMMON_UNITS):
                 continue
             units.append(
                 Unit(
@@ -333,7 +347,7 @@ class TFTSetData:
                     api_name=champ["apiName"].upper(),
                     cost=champ["cost"],
                     role=champ.get("role"),
-                    shop_unit=has_traits,
+                    shop_unit=shop_unit,
                     stats=champ["stats"],
                 )
             )
