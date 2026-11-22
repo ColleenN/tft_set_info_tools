@@ -172,6 +172,33 @@ def test_get_shop_units_excludes_traitless_champions():
     assert names == {"Zilean"}
 
 
+def test_shop_unit_flag_overrides_traits():
+    base = make_base()
+    base["setData"][0]["champions"] += [
+        {"name": "Zilean", "apiName": "TFT12_Zilean_Override", "cost": 2, "traits": ["Chrono"], "shopUnit": False},
+        {"name": "Dummy", "apiName": "TFT12_FlaggedDummy", "cost": 0, "traits": [], "shopUnit": True},
+    ]
+    set_data = TFTSetData(DictDataSource(base), set_num=12)
+
+    names = {c["apiName"] for c in set_data.get_shop_units()}
+
+    assert names == {"TFT12_Zilean", "TFT12_FlaggedDummy"}
+
+
+def test_normalized_units_keep_flagged_non_shop_units():
+    base = make_base()
+    for champion in base["setData"][0]["champions"]:
+        champion["stats"] = {}
+    base["setData"][0]["champions"].append(
+        {"name": "Zilean", "apiName": "TFT12_Zilean_Override", "cost": 2, "traits": ["Chrono"], "shopUnit": False, "stats": {}}
+    )
+    set_data = TFTSetData(DictDataSource(base), set_num=12)
+
+    shop = {u.api_name: u.shop_unit for u in set_data.get_normalized_units()}
+
+    assert shop == {"TFT12_ZILEAN": True, "TFT12_ZILEAN_OVERRIDE": False, "TFT_TRAININGDUMMY": False}
+
+
 def test_get_units_includes_traitless_champions():
     set_data = TFTSetData(DictDataSource(make_base()), set_num=12)
     names = {c["name"] for c in set_data.get_units()}
