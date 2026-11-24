@@ -28,6 +28,7 @@ Allowed values:
   - "units"
   - "unit_innate_traits"
   - "augments"
+  - "augment_tiers": one row per tier each augment is offered at, so an augment offered at Gold and Prismatic gets two rows.
 `load` - append mirrored Community Dragon snapshots to the BigQuery reference tables. The scheduled loader job runs this from the image built by `cloudbuild.yaml`.
 
 Each run loads every capture under `snapshots/cdragon/<channel>/` that isn't in the dataset's `loaded_captures` table yet, paired with its Team Planner capture. For each set from `--min-set` up (standard mode only), the reference table generators' rows are appended with version columns: `channel`, `build` (in match-record form, e.g. `16.21.829.8620`), `cdragon_version`, `cdragon_status`, `captured_at`, `source_object`, `set_number` and `mutator`. Tables are created if missing.

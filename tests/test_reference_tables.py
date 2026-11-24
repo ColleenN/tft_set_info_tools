@@ -71,7 +71,19 @@ def test_json_columns_hold_parsed_values(set_data):
 
     assert tier["tier_variables"] == {}
     assert augment["effects"] == {"x": 1}
-    assert augment["tier"] == "SILVER"
+
+
+def test_augment_tiers_one_row_per_tier(set_data):
+    assert rows(set_data, "augment_tiers") == [{"item_api_name": "TFT_AUGMENT_TESTAUGMENT", "tier": "SILVER"}]
+
+
+def test_augment_offered_at_two_tiers_gets_a_row_for_each():
+    base = make_full_base()
+    augment = next(i for i in base["items"] if i["apiName"] == "TFT_Augment_TestAugment")
+    augment["tags"] = augment["tags"] + ["{cf1fd3af}"]
+    tiers = rows(TFTSetData(DictDataSource(base), set_num=12), "augment_tiers")
+    assert [r["tier"] for r in tiers] == ["SILVER", "PRISMATIC"]
+    assert "tier" not in rows(TFTSetData(DictDataSource(base), set_num=12), "augments")[0]
 
 
 def test_items_and_augments_carry_their_description(set_data):
