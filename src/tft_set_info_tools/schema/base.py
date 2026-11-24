@@ -47,12 +47,17 @@ class SetDataSchema(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_augment_tier(self, augment: dict) -> AugmentTier | None:
-        """The AugmentTier that augment, a raw augment dict from this schema's shape, belongs to.
+    def get_augment_tiers(self, augment: dict) -> frozenset[AugmentTier]:
+        """Every AugmentTier that augment, a raw augment dict from this schema's shape, is offered at.
 
-        None if augment doesn't match any known tier.
+        Some augments are offered at two tiers. Empty if augment matches no known tier.
         """
         raise NotImplementedError
+
+    def get_augment_tier(self, augment: dict) -> AugmentTier | None:
+        """The lowest AugmentTier that augment is offered at, or None if it has no known tier."""
+        tiers = self.get_augment_tiers(augment)
+        return next((t for t in AugmentTier if t in tiers), None)
 
     @abstractmethod
     def get_component(self, item: dict) -> Component | None:

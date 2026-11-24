@@ -178,7 +178,21 @@ def test_cdragon_schema_get_item_types_and_augment_tier():
     item = {"tags": ["{44ace175}"]}
     augment = {"tags": ["{b72bd3bf}", "{ce1fd21c}"]}
     assert schema.get_item_types(item) == {ItemType.ARTIFACT}
+    assert schema.get_augment_tiers(augment) == {AugmentTier.GOLD}
     assert schema.get_augment_tier(augment) == AugmentTier.GOLD
+
+
+def test_cdragon_schema_augment_offered_at_two_tiers():
+    schema = CDragonSchema()
+    augment = {"tags": ["{b72bd3bf}", "{cf1fd3af}", "{ce1fd21c}"]}
+    assert schema.get_augment_tiers(augment) == {AugmentTier.GOLD, AugmentTier.PRISMATIC}
+    assert schema.get_augment_tier(augment) == AugmentTier.GOLD
+
+
+def test_cdragon_schema_augment_without_a_tier():
+    schema = CDragonSchema()
+    assert schema.get_augment_tiers({"tags": ["{b72bd3bf}"]}) == frozenset()
+    assert schema.get_augment_tier({"tags": ["{b72bd3bf}"]}) is None
 
 
 def test_cdragon_schema_get_component():
@@ -241,6 +255,7 @@ def test_metatft_schema_get_item_types_and_augment_tier():
     item = {"tags": ["Item.Equippable.Item.Artifact"]}
     augment = {"rarity": "Gold"}
     assert schema.get_item_types(item) == {ItemType.ARTIFACT}
+    assert schema.get_augment_tiers(augment) == {AugmentTier.GOLD}
     assert schema.get_augment_tier(augment) == AugmentTier.GOLD
 
 

@@ -32,7 +32,8 @@ Methods:
 * `def latest_set_number(self, raw: dict) -> int`: The highest set number present in `raw`.
 * `def extract(self, raw: dict, set_num: int) -> ExtractedSet`: Locates the given set's data within `raw`. Raises `ValueError` if not found.
 * `def get_item_types(self, item: dict) -> frozenset[ItemType]`: Every `ItemType` that `item` belongs to.
-* `def get_augment_tier(self, augment: dict) -> AugmentTier | None`: The `AugmentTier` that `augment` belongs to, or `None` if it doesn't match any known tier.
+* `def get_augment_tiers(self, augment: dict) -> frozenset[AugmentTier]`: Every `AugmentTier` that `augment` is offered at. Some augments are offered at two tiers. Empty if it matches no known tier.
+* `def get_augment_tier(self, augment: dict) -> AugmentTier | None`: The lowest of `get_augment_tiers()`, or `None` if there are none. Implemented on the base class.
 * `def get_component(self, item: dict) -> Component | None`: The `Component` that `item` is, or `None` if it isn't one of the 10 basic components (e.g. it's a craftable/completed item). Only reads `item["apiName"]`, so a minimal dict works too (e.g. one built from a craftable item's raw `"composition"` list of api names).
 * `def is_equippable_item(self, item: dict) -> bool`: Whether `item` is real equippable gear, excluding consumables/markers/other non-equipment entries that share the same raw items pool on some sources.
 

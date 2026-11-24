@@ -138,9 +138,9 @@ class CDragonSchema(SetDataSchema):
         tags = item.get("tags", [])
         return frozenset(t for t in ItemType if t.type_hash in tags)
 
-    def get_augment_tier(self, augment: dict) -> AugmentTier | None:
+    def get_augment_tiers(self, augment: dict) -> frozenset[AugmentTier]:
         tags = augment.get("tags", [])
-        return next((t for t in AugmentTier if t.value in tags), None)
+        return frozenset(t for t in AugmentTier if t.value in tags)
 
     def get_component(self, item: dict) -> Component | None:
         return _COMPONENT_API_NAMES.get(item["apiName"])
