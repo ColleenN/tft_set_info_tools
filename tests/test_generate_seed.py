@@ -57,7 +57,7 @@ def clear_env(monkeypatch):
 
 def test_parse_types_expands_all():
     assert set(_parse_types("all")) == set(
-        _parse_types("trait_tiers,items,units,unit_innate_traits,augments")
+        _parse_types("trait_tiers,items,units,unit_innate_traits,augments,augment_tiers")
     )
 
 

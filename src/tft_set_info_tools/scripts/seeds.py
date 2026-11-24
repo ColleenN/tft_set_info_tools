@@ -63,10 +63,17 @@ def _generate_augments(set_data: TFTSetData) -> list[dict]:
         {
             "item_name": augment.name,
             "item_api_name": augment.api_name,
-            "tier": augment.tier.name if augment.tier is not None else "",
             "effects": dumps(augment.effects),
         }
         for augment in set_data.get_normalized_augments()
+    ]
+
+
+def _generate_augment_tiers(set_data: TFTSetData) -> list[dict]:
+    return [
+        {"item_api_name": augment.api_name, "tier": tier.name}
+        for augment in set_data.get_normalized_augments()
+        for tier in augment.tiers
     ]
 
 
@@ -103,4 +110,5 @@ SEED_GENERATORS: dict[str, Callable[[TFTSetData], list[dict]]] = {
     "units": _generate_units,
     "unit_innate_traits": _generate_unit_innate_traits,
     "augments": _generate_augments,
+    "augment_tiers": _generate_augment_tiers,
 }

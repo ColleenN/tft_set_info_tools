@@ -106,7 +106,13 @@ def test_generate_augments(set_data):
 
     assert len(rows) == 1
     assert rows[0]["item_api_name"] == "TFT_AUGMENT_TESTAUGMENT"
-    assert rows[0]["tier"] == "SILVER"
+    assert "tier" not in rows[0]
+
+
+def test_generate_augment_tiers(set_data):
+    assert SEED_GENERATORS["augment_tiers"](set_data) == [
+        {"item_api_name": "TFT_AUGMENT_TESTAUGMENT", "tier": "SILVER"}
+    ]
 
 
 def test_generate_trait_tiers(set_data):

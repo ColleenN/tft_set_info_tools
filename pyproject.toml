@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tft_set_info_tools"
-version = "0.2.2"
+version = "0.3.0"
 description = "Shared tools for working with TFT set info across my Python projects."
 readme = "README.md"
 requires-python = ">=3.11"
