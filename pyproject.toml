@@ -23,10 +23,15 @@ gcp = [
     "google-cloud-storage>=2",
     "google-cloud-bigquery>=3",
 ]
+unreal = [
+    "cryptography>=42",
+    "pyooz>=0.0.8",
+]
 all = [
-    "tft_set_info_tools[gcp]",
+    "tft_set_info_tools[gcp,unreal]",
 ]
 dev = [
+    "tft_set_info_tools[unreal]",
     "pytest>=8",
     "build>=1",
 ]
