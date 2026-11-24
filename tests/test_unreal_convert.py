@@ -4,7 +4,8 @@ import json
 import pytest
 import time_machine
 
-from tests.unreal_client import SET, build_client
+from tests.unreal_builders import build_zen
+from tests.unreal_client import ITEMS, SET, build_client, texts, write
 from tft_set_info_tools.scripts.cli import main
 from tft_set_info_tools.unreal.upload import ConversionError, cdragon_version, convert, trait_styles
 
@@ -136,3 +137,35 @@ def test_cli(client, tmp_path, capsys):
     summary = json.loads(capsys.readouterr().out)
     assert summary["file"] == "20261124T030000Z_en_us.json.gz"
     assert json.loads(raw.read_text())["items"][0]["tags"] == ["Item.Component"]
+
+
+def add_tactician_and_thief_items(client):
+    for name, tag in [("TacticiansCrown", "Item.Equippable.Item.Tacticians"),
+                      ("ThiefsGloves", "Item.Equippable.Item.ThiefsGloves")]:
+        write(client, f"{ITEMS}/{name}/DA_{name}.uasset", build_zen(
+            [f"DA_{name}", f"Identifier.Item.{name}", "Item.Equippable.Item.Craftable", tag], body=texts(7)))
+
+
+def test_marks_tactician_and_thief_items(client, tmp_path):
+    add_tactician_and_thief_items(client)
+    convert([client], BUILD, tmp_path / "upload")
+    items = {i["apiName"]: i for i in read_capture(next((tmp_path / "upload").glob("*.json.gz")))["items"]}
+    assert items["DA_TacticiansCrown"]["tags"] == [
+        "Item.Equippable.Item.Craftable", "Item.Equippable.Item.Tacticians", "{d304f83b}"]
+    assert items["DA_ThiefsGloves"]["tags"][-1] == "{218b53a5}"
+    assert items["DA_Deathblade"]["tags"] == ["Item.Completed"]
+
+
+def test_marks_them_on_top_of_the_previous_translation(client, tmp_path):
+    add_tactician_and_thief_items(client)
+    previous, previous_raw = previous_upload(tmp_path, client)
+    data = read_capture(previous)
+    for item in data["items"]:
+        if item["apiName"] in ("DA_TacticiansCrown", "DA_ThiefsGloves"):
+            item["tags"] = ["{7ea41d13}"]
+    data["setData"][0]["items"] += ["DA_TacticiansCrown", "DA_ThiefsGloves"]
+    previous.write_bytes(gzip.compress(json.dumps(data).encode()))
+    convert([client], BUILD, tmp_path / "second", previous=previous, previous_raw=previous_raw)
+    items = {i["apiName"]: i for i in read_capture(next((tmp_path / "second").glob("*.json.gz")))["items"]}
+    assert items["DA_TacticiansCrown"]["tags"] == ["{7ea41d13}", "{d304f83b}"]
+    assert items["DA_ThiefsGloves"]["tags"] == ["{7ea41d13}", "{218b53a5}"]
