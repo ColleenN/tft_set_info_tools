@@ -263,3 +263,44 @@ def build_locres(entries: dict[str, dict[str, str]], version: int = 3) -> bytes:
     for s in strings:
         array += _locres_string(s) + (struct.pack("<i", 1) if version >= 2 else b"")
     return head + struct.pack("<q", array_offset) + body + array
+
+
+def _name_batch(names: list[str]) -> bytes:
+    raw = [n.encode() for n in names]
+    out = struct.pack("<IIQ", len(names), sum(len(r) for r in raw), 0)
+    out += b"\0" * 8 * len(names)
+    out += struct.pack(f">{len(names)}h", *(len(r) for r in raw))
+    return out + b"".join(raw)
+
+
+def build_zen(names: list[str], imports: list[str] = (), body: bytes = b"", versioning: bool = False) -> bytes:
+    """A zen package: summary, name table, imported package names, then `body` after the header."""
+    pos = 60
+    custom = b""
+    if versioning:
+        custom = struct.pack("<IIII", 0, 0, 0, 0) + struct.pack("<i", 1) + b"\0" * 20
+        pos += len(custom)
+    name_table = _name_batch(names)
+    imports_offset = pos + len(name_table) if imports else 0
+    import_table = _name_batch(list(imports)) if imports else b""
+    header_size = pos + len(name_table) + len(import_table)
+    summary = bytearray(60)
+    struct.pack_into("<II", summary, 0, int(versioning), header_size)
+    struct.pack_into("<I", summary, 48, imports_offset)
+    return bytes(summary) + custom + name_table + import_table + body
+
+
+def text_property(key: str, source: str, namespace: str = "") -> bytes:
+    """Localized text as assets serialize it: namespace, key, then the source string."""
+    return fstring(namespace) + fstring(key) + fstring(source)
+
+
+def curve_table(rows: dict[str, list[tuple[float, float]]]) -> bytes:
+    """A curve table package whose row names are its names."""
+    names = list(rows)
+    body = b"\0" * 6 + struct.pack("<i", len(rows)) + b"\0"
+    for i, keys in enumerate(rows.values()):
+        body += struct.pack("<II", i, 0) + b"\0" * 3 + struct.pack("<i", len(keys))
+        body += b"".join(struct.pack("<ff", x, y) for x, y in keys)
+        body += b"\0" * 6
+    return build_zen(names, body=body + bytes.fromhex("c1832a9e"))
