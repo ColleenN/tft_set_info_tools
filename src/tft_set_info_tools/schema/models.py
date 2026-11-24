@@ -35,9 +35,14 @@ class Augment:
 
     name: str
     api_name: str
-    tier: AugmentTier | None
+    tiers: tuple[AugmentTier, ...]
     desc: str | None
     effects: dict
+
+    @property
+    def tier(self) -> AugmentTier | None:
+        """The lowest tier the augment is offered at."""
+        return self.tiers[0] if self.tiers else None
 
 
 @dataclass(frozen=True)

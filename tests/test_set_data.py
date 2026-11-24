@@ -166,6 +166,32 @@ def test_get_augments_filtered_by_tier():
     assert names == {"TFT_Augment_Gold1"}
 
 
+def with_two_tier_augment():
+    base = make_base()
+    base["items"].append(
+        {"apiName": "TFT_Augment_GoldPrismatic1", "name": "Two Tiers", "tags": ["{cf1fd3af}", "{ce1fd21c}"], "effects": {}}
+    )
+    base["setData"][0]["augments"].append("TFT_Augment_GoldPrismatic1")
+    for item in base["items"]:
+        item.setdefault("effects", {})
+    return TFTSetData(DictDataSource(base), set_num=12)
+
+
+def test_augment_offered_at_two_tiers_is_in_both():
+    set_data = with_two_tier_augment()
+    gold = {a["apiName"] for a in set_data.get_augments(AugmentTier.GOLD)}
+    prismatic = {a["apiName"] for a in set_data.get_augments(AugmentTier.PRISMATIC)}
+    assert gold == {"TFT_Augment_Gold1", "TFT_Augment_GoldPrismatic1"}
+    assert prismatic == {"TFT_Augment_GoldPrismatic1"}
+
+
+def test_normalized_augment_keeps_every_tier_lowest_first():
+    set_data = with_two_tier_augment()
+    augment = next(a for a in set_data.get_normalized_augments() if a.api_name == "TFT_AUGMENT_GOLDPRISMATIC1")
+    assert augment.tiers == (AugmentTier.GOLD, AugmentTier.PRISMATIC)
+    assert augment.tier == AugmentTier.GOLD
+
+
 def test_get_shop_units_excludes_traitless_champions():
     set_data = TFTSetData(DictDataSource(make_base()), set_num=12)
     names = {c["name"] for c in set_data.get_shop_units()}
