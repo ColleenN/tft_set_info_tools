@@ -241,13 +241,19 @@ class TFTSetData:
         return self._schema.is_equippable_item(item)
 
     def get_augment_tier(self, augment: dict) -> AugmentTier | None:
-        """The tier of a raw augment from `get_augments()`, if it has a known one."""
+        """The lowest tier a raw augment from `get_augments()` is offered at, if it has a known one."""
         return self._schema.get_augment_tier(augment)
 
+    def get_augment_tiers(self, augment: dict) -> tuple[AugmentTier, ...]:
+        """Every tier a raw augment from `get_augments()` is offered at, lowest first."""
+        tiers = self._schema.get_augment_tiers(augment)
+        return tuple(t for t in AugmentTier if t in tiers)
+
     def get_augments(self, tier: AugmentTier | None = None) -> list[dict]:
+        """The set's augments; given a tier, those offered at it."""
         augments = self._extracted.augments
         if tier is not None:
-            augments = [a for a in augments if self._schema.get_augment_tier(a) == tier]
+            augments = [a for a in augments if tier in self._schema.get_augment_tiers(a)]
         return augments
 
     def get_normalized_augments(self) -> list[Augment]:
@@ -256,7 +262,7 @@ class TFTSetData:
             Augment(
                 name=raw["name"],
                 api_name=raw["apiName"].upper(),
-                tier=self._schema.get_augment_tier(raw),
+                tiers=self.get_augment_tiers(raw),
                 desc=raw.get("desc"),
                 effects=raw["effects"],
             )

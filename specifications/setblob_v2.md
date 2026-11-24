@@ -24,13 +24,13 @@ Methods:
 * `def get_units(self) -> list[dict]`: Returns a list of dictionaries describing all units in the set.
 * `def get_shop_units(self)`: Returns a list of dictionaries describing shop units in the set.
   * Note: "Shop Units" are defined as units that possess one or more trait tags.
-* `def get_augments(self, tier: AugmentTier = None)`: Returns a list of dictionaries describing augments in the set, optionally filtered to the specified augment tier.
-* `def get_normalized_augments(self) -> list[Augment]`: Every augment, normalized to the fields the seed CSV schema needs (see `Augment` in `schema.md`). `tier` is classified polymorphically, so this works for any registered schema.
+* `def get_augments(self, tier: AugmentTier = None)`: Returns a list of dictionaries describing augments in the set, optionally filtered to those offered at the specified augment tier. An augment offered at two tiers is in both.
+* `def get_normalized_augments(self) -> list[Augment]`: Every augment, normalized to the fields the seed CSV schema needs (see `Augment` in `schema.md`). `tiers` is classified polymorphically, so this works for any registered schema.
 * `def get_equippable_items(self) -> list[Item]`: Equippable items, normalized/filtered per the legacy `tft_tools` seed CSV schema (see `Item` in `schema.md`). The inclusion filter (`SetDataSchema.is_equippable_item()`) and component-composition parsing (`SetDataSchema.get_component()`) are polymorphic, so this produces rows for any registered schema -- though see the `MetaTFTSchema.is_equippable_item()` caveat in `schema.md`.
 * `def get_normalized_units(self) -> list[Unit]`: Shop units plus known summon units, normalized per the legacy seed CSV schema (see `Unit` in `schema.md`).
 * `def get_normalized_unit_traits(self) -> list[UnitTrait]`: Every unit's innate traits, joined to each trait's api name (see `UnitTrait` in `schema.md`).
 * `def get_team_planner_ids(self) -> tuple[int, dict[str, int]]`: The Team Planner code version the set's champion IDs belong to, and each shop unit's ID keyed by `apiName`. Version 2 when the source bundles Team Planner champion codes for this mutator, otherwise version 1 (from `get_team_planner_champion_order()`).
-* `def get_item_types(self, item: dict) -> frozenset[ItemType]`, `def is_equippable_item(self, item: dict) -> bool`, `def get_augment_tier(self, augment: dict) -> AugmentTier | None`: Classify a raw item or augment from `get_items()`/`get_augments()` using the set's schema.
+* `def get_item_types(self, item: dict) -> frozenset[ItemType]`, `def is_equippable_item(self, item: dict) -> bool`, `def get_augment_tier(self, augment: dict) -> AugmentTier | None` (the lowest tier), `def get_augment_tiers(self, augment: dict) -> tuple[AugmentTier, ...]` (every tier, lowest first): Classify a raw item or augment from `get_items()`/`get_augments()` using the set's schema.
 
 Properties:
 * `def mutator(self) -> str`: Returns the set's "mutator", its unique identifier in the data source.
