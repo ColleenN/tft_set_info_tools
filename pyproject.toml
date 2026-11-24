@@ -33,6 +33,7 @@ all = [
 dev = [
     "tft_set_info_tools[unreal]",
     "pytest>=8",
+    "time-machine>=2",
     "build>=1",
 ]
 

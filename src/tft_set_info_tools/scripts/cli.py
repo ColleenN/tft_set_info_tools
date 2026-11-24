@@ -65,7 +65,7 @@ def build_parser() -> argparse.ArgumentParser:
     unreal.add_arguments(
         subparsers.add_parser(
             "unreal",
-            help="List and extract files from the TFT client's Unreal containers.",
+            help="List, extract and convert files from the TFT client's Unreal containers.",
         )
     )
 
