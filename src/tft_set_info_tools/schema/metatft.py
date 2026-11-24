@@ -83,12 +83,9 @@ class MetaTFTSchema(SetDataSchema):
             item_type for item_type, tag in self.ITEM_TYPE_TAGS.items() if tag in tags
         )
 
-    def get_augment_tier(self, augment: dict) -> AugmentTier | None:
+    def get_augment_tiers(self, augment: dict) -> frozenset[AugmentTier]:
         rarity = augment.get("rarity")
-        return next(
-            (tier for tier, value in self.AUGMENT_TIER_VALUES.items() if value == rarity),
-            None,
-        )
+        return frozenset(tier for tier, value in self.AUGMENT_TIER_VALUES.items() if value == rarity)
 
     def get_component(self, item: dict) -> Component | None:
         return self.COMPONENT_API_NAMES.get(item["apiName"])
