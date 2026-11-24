@@ -222,3 +222,44 @@ def build_iostore(utoc: Path, files: list[tuple[str, bytes]], *, key: bytes | No
     for i, data in enumerate(partitions):
         suffix = ".ucas" if i == 0 else f"_s{i}.ucas"
         Path(f"{base}{suffix}").write_bytes(bytes(data))
+
+
+LOCRES_MAGIC = bytes.fromhex("0e147475674a03fc4a15909dc3377f1b")
+
+
+def _locres_string(s: str) -> bytes:
+    return fstring(s, utf16=not s.isascii())
+
+
+def build_locres(entries: dict[str, dict[str, str]], version: int = 3) -> bytes:
+    """A .locres file; version 0 is the legacy layout without the magic."""
+    if version == 0:
+        out = struct.pack("<I", len(entries))
+        for namespace, table in entries.items():
+            out += _locres_string(namespace) + struct.pack("<I", len(table))
+            for key, value in table.items():
+                out += _locres_string(key) + struct.pack("<I", 0) + _locres_string(value)
+        return out
+
+    strings: list[str] = []
+    body = b""
+    if version >= 2:
+        body += struct.pack("<I", sum(len(t) for t in entries.values()))
+    body += struct.pack("<I", len(entries))
+    for namespace, table in entries.items():
+        if version >= 2:
+            body += struct.pack("<I", 0)
+        body += _locres_string(namespace) + struct.pack("<I", len(table))
+        for key, value in table.items():
+            if value not in strings:
+                strings.append(value)
+            if version >= 2:
+                body += struct.pack("<I", 0)
+            body += _locres_string(key) + struct.pack("<Ii", 0, strings.index(value))
+
+    head = LOCRES_MAGIC + bytes([version])
+    array_offset = len(head) + 8 + len(body)
+    array = struct.pack("<I", len(strings))
+    for s in strings:
+        array += _locres_string(s) + (struct.pack("<i", 1) if version >= 2 else b"")
+    return head + struct.pack("<q", array_offset) + body + array

@@ -41,3 +41,16 @@ Each option falls back to an environment variable, so the job can keep its setti
 - `--dataset` / `TFT_LOADER_DATASET`: BigQuery dataset for the reference tables, as `[project.]dataset`. Required.
 - `--min-set` / `TFT_LOADER_MIN_SET`: lowest set number to load. Required.
 - `--channels` / `TFT_LOADER_CHANNELS`: comma-separated channels. Defaults to `live,pbe`.
+
+`unreal` - list and extract files from the standalone TFT client's Unreal containers: `.pak` files and IoStore containers (`.utoc` plus its `.ucas` files). Files come out decrypted and decompressed. Needs the `unreal` extra, which brings in `cryptography` for decryption and `pyooz` for Oodle.
+
+Paths are relative to the game root, e.g. `TFT/Plugins/GameFeatures/Set_19/...`.
+
+Subcommands:
+- `list <container>`: print each file's uncompressed size and path.
+- `extract <container>`: write the files under `-o`/`--output` (defaults to the container's path without its extension), at their container paths. `--lazy` skips files that already exist.
+- `locres-dump <locres>...`: merge `.locres` string tables in order, later files winning, and write them as JSON keyed by namespace, then key. `-o`/`--output` names the file; stdout otherwise.
+
+`list` and `extract` also take:
+- `-p` / `--pattern`: only files whose path matches this shell-style pattern. Repeatable.
+- `-k` / `--aes-key` / `TFT_UE_AES_KEY`: the container's AES-256 key, as hex. Needed only for encrypted containers.

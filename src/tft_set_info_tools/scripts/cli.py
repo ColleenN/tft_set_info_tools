@@ -9,7 +9,7 @@ import sys
 import traceback
 from pathlib import Path
 
-from tft_set_info_tools.scripts import generate_seed, load, update_src
+from tft_set_info_tools.scripts import generate_seed, load, unreal, update_src
 
 
 def load_env_file(path: str) -> None:
@@ -62,6 +62,12 @@ def build_parser() -> argparse.ArgumentParser:
             help="Append a source's mirrored copies to BigQuery.",
         )
     )
+    unreal.add_arguments(
+        subparsers.add_parser(
+            "unreal",
+            help="List and extract files from the TFT client's Unreal containers.",
+        )
+    )
 
     return parser
 
@@ -79,6 +85,8 @@ def main(argv: list[str] | None = None) -> int:
             generate_seed.run(args.src, args.dst_path, args.set_num, args.type)
         elif args.command == "load":
             load.run(args)
+        elif args.command == "unreal":
+            unreal.run(args)
     except Exception as exc:
         print(traceback.format_exc(), file=sys.stderr)
         print(f"error: {exc}", file=sys.stderr)
