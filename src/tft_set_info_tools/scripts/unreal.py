@@ -1,4 +1,5 @@
-"""`unreal <command>`: list and extract files from the standalone TFT client's Unreal containers."""
+"""`unreal <command>`: list and extract files from the standalone TFT client's Unreal containers,
+and convert extracted files into a set data capture."""
 
 from __future__ import annotations
 
@@ -34,6 +35,18 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     locres = commands.add_parser("locres-dump", help="Merge .locres string tables and write them as JSON.")
     locres.add_argument("-o", "--output", help="JSON file to write. Default: stdout.")
     locres.add_argument("locres", nargs="+", help=".locres files, merged in order; later files win.")
+
+    convert = commands.add_parser(
+        "convert", help="Convert extracted client files into a gzipped en_us.json capture and its metadata.")
+    convert.add_argument("-b", "--build", required=True, help="The client build, e.g. rls-19.1.0.6018196.")
+    convert.add_argument("-o", "--output", required=True, help="Directory to write the capture and its metadata into.")
+    convert.add_argument("-s", "--set", type=int, dest="set_number",
+                         help="Set number. Default: the highest set with champions.")
+    convert.add_argument("--locale", default="en-US", help="Locale of the strings to use. Default: en-US.")
+    convert.add_argument("--previous", help="The previous upload's capture, to reuse its hand-made decisions.")
+    convert.add_argument("--previous-raw", help="The --raw export written alongside the previous upload.")
+    convert.add_argument("--raw", help="Also write the export before the loader-facing fixes, for --previous-raw next time.")
+    convert.add_argument("extracted", nargs="+", help="Folders of files extracted with `unreal extract`.")
 
 
 def open_from_args(args: argparse.Namespace):
@@ -80,6 +93,14 @@ def dump_locres(args: argparse.Namespace) -> None:
         print()
 
 
+def convert_files(args: argparse.Namespace) -> None:
+    from tft_set_info_tools.unreal.upload import convert
+
+    summary = convert(args.extracted, args.build, args.output, set_number=args.set_number, locale=args.locale,
+                      previous=args.previous, previous_raw=args.previous_raw, raw_output=args.raw)
+    print(json.dumps(summary, indent=1))
+
+
 def run(args: argparse.Namespace) -> None:
     if args.unreal_command == "list":
         list_files(args)
@@ -87,3 +108,5 @@ def run(args: argparse.Namespace) -> None:
         extract_files(args)
     elif args.unreal_command == "locres-dump":
         dump_locres(args)
+    elif args.unreal_command == "convert":
+        convert_files(args)
