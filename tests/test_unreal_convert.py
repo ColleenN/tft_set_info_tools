@@ -182,3 +182,34 @@ def test_marks_them_on_top_of_the_previous_translation(client, tmp_path):
     items = {i["apiName"]: i for i in read_capture(next((tmp_path / "second").glob("*.json.gz")))["items"]}
     assert items["DA_TacticiansCrown"]["tags"] == ["{7ea41d13}", "{d304f83b}"]
     assert items["DA_ThiefsGloves"]["tags"] == ["{7ea41d13}", "{218b53a5}"]
+
+
+def test_set_mechanic_items_are_marked_equippable(client, tmp_path):
+    for name, tags in [("Bard19_UniqueItem", ["Item.Equippable.CantReforge", "Item.Equippable.Item.Set19.BardUnique"]),
+                       ("IonicSpark19_SmallADConsumable", ["Item.Equippable.Consumable.IonicSparkBoost.Small"])]:
+        write(client, f"{SET}/Items/DA_{name}.uasset", build_zen([f"DA_{name}", f"Identifier.Item.{name}"] + tags, body=texts(7)))
+    previous, previous_raw = previous_upload(tmp_path, client)
+    data = read_capture(previous)
+    for item in data["items"]:
+        if item["apiName"] in ("DA_Bard19_UniqueItem", "DA_IonicSpark19_SmallADConsumable"):
+            item["tags"] = []
+    data["setData"][0]["items"] += ["DA_Bard19_UniqueItem", "DA_IonicSpark19_SmallADConsumable"]
+    previous.write_bytes(gzip.compress(json.dumps(data).encode()))
+    convert([client], BUILD, tmp_path / "second", previous=previous, previous_raw=previous_raw)
+    items = {i["apiName"]: i for i in read_capture(next((tmp_path / "second").glob("*.json.gz")))["items"]}
+    assert items["DA_Bard19_UniqueItem"]["tags"] == ["SetMechanicItem"]
+    assert items["DA_IonicSpark19_SmallADConsumable"]["tags"] == []
+
+
+def test_set_tagged_items_already_equippable_are_left_alone(client, tmp_path):
+    write(client, f"{SET}/Traits/TrueDamage/DA_TrueDamage19_Emblem.uasset", build_zen(
+        ["DA_TrueDamage19_Emblem", "Identifier.Item.TrueDamageEmblem", "Item.Equippable.Item.Emblem.Elusive",
+         "Item.Equippable.Item.Set19.TrueDamageEmblem"], body=texts(7)))
+    previous, previous_raw = previous_upload(tmp_path, client)
+    data = read_capture(previous)
+    next(i for i in data["items"] if i["apiName"] == "DA_TrueDamage19_Emblem")["tags"] = ["{ebcd1bac}"]
+    data["setData"][0]["items"] += ["DA_TrueDamage19_Emblem"]
+    previous.write_bytes(gzip.compress(json.dumps(data).encode()))
+    convert([client], BUILD, tmp_path / "second", previous=previous, previous_raw=previous_raw)
+    items = {i["apiName"]: i for i in read_capture(next((tmp_path / "second").glob("*.json.gz")))["items"]}
+    assert items["DA_TrueDamage19_Emblem"]["tags"] == ["{ebcd1bac}"]

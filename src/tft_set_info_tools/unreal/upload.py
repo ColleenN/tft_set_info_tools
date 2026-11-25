@@ -17,7 +17,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from tft_set_info_tools.schema.vocab import ItemType
+from tft_set_info_tools.schema.cdragon import CDragonSchema
+from tft_set_info_tools.schema.vocab import SET_MECHANIC_ITEM_TAG, ItemType
 from tft_set_info_tools.unreal.assets import ExtractedFiles, load_assets, read_strings, scan_recipes
 from tft_set_info_tools.unreal.set_data import build_tft_data, enrich, latest_set, set_entry
 from tft_set_info_tools.unreal.zen import ZenPackage
@@ -36,6 +37,7 @@ TAG_CODES = {
 # On augments and consumables these tags name the items they grant or act on
 # (Band of Thieves, Salvager), not what the asset is, so they get no code.
 NOT_ITEMS_OF_THEIR_TAGS = ("Augment.", "Item.Equippable.Consumable")
+SET_MECHANIC_PATTERN = re.compile(r"^Item\.Equippable\.Item\.Set\d+\.")
 UNIQUE_TRAIT_EFFECTS = [{"maxUnits": 25, "minUnits": 1, "style": 6, "variables": {}}]
 
 
@@ -114,8 +116,11 @@ def apply_previous(data: dict[str, Any], previous: dict[str, Any], previous_raw:
 def add_tag_codes(data: dict[str, Any], client_tags: dict[str, list[str]]) -> None:
     """Add the CDragon code of each client tag in TAG_CODES that an item carries.
 
+    A set mechanic's item (an `Item.Equippable.Item.Set<N>.*` client tag) that
+    the loader still wouldn't count as equippable gets SET_MECHANIC_ITEM_TAG.
     Augments and consumables are skipped: see NOT_ITEMS_OF_THEIR_TAGS.
     """
+    schema = CDragonSchema()
     for item in data["items"]:
         tags = client_tags[item["apiName"]]
         if any(t.startswith(NOT_ITEMS_OF_THEIR_TAGS) for t in tags):
@@ -124,6 +129,8 @@ def add_tag_codes(data: dict[str, Any], client_tags: dict[str, list[str]]) -> No
             code = TAG_CODES.get(tag)
             if code and code not in item["tags"]:
                 item["tags"] = item["tags"] + [code]
+        if any(SET_MECHANIC_PATTERN.match(t) for t in tags) and not schema.is_equippable_item(item):
+            item["tags"] = item["tags"] + [SET_MECHANIC_ITEM_TAG]
 
 
 def finish(data: dict[str, Any], shop: set[str], set_number: int, build: str) -> None:
