@@ -56,7 +56,7 @@ Subcommands:
   - `-s` / `--set`: the set number. Defaults to the highest set with champions.
   - `--locale`: the strings' locale. Defaults to `en-US`.
   - `--previous` and `--previous-raw`, together: the previous upload's capture and the `--raw` export written with it. Item tags translated to CDragon's codes by hand are reused for items whose client tags haven't changed, and so is the set's split into items and augments. The command stops, naming the items, when a tag translation or split is needed for an item. Without them, tags stay as the client's and the set's items split by asset kind.
-  - Whichever way tags are translated, items with the client tag `Item.Equippable.Item.Tacticians` get CDragon's Tactician item code (`{d304f83b}`), and items with `Item.Equippable.Item.ThiefsGloves` get its Thief's Gloves code (`{218b53a5}`).
+  - Whichever way tags are translated, items with the client tag `Item.Equippable.Item.Tacticians` get CDragon's Tactician item code (`{d304f83b}`), and items with `Item.Equippable.Item.ThiefsGloves` get its Thief's Gloves code (`{218b53a5}`). Augments and consumables don't, since on them these tags name the items they grant or act on.
   - `--raw`: also write the export before those fixes, to pass as `--previous-raw` next time.
 
   The capture fills in names, descriptions, costs, roles, traits, stats, icons, item tags and recipes, plus curve-table values: attack damage by star level, ability variables and trait breakpoint variables. Each champion gets `shopUnit` from the champions table. Trait breakpoints get CDragon's styles, and a trait with none gets a single breakpoint at one unit.

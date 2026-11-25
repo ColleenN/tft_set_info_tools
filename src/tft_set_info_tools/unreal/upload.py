@@ -33,6 +33,9 @@ TAG_CODES = {
     "Item.Equippable.Item.Tacticians": ItemType.TAC_ITEM.type_hash,
     "Item.Equippable.Item.ThiefsGloves": ItemType.TG_ITEM.type_hash,
 }
+# On augments and consumables these tags name the items they grant or act on
+# (Band of Thieves, Salvager), not what the asset is, so they get no code.
+NOT_ITEMS_OF_THEIR_TAGS = ("Augment.", "Item.Equippable.Consumable")
 UNIQUE_TRAIT_EFFECTS = [{"maxUnits": 25, "minUnits": 1, "style": 6, "variables": {}}]
 
 
@@ -109,9 +112,15 @@ def apply_previous(data: dict[str, Any], previous: dict[str, Any], previous_raw:
 
 
 def add_tag_codes(data: dict[str, Any], client_tags: dict[str, list[str]]) -> None:
-    """Add the CDragon code of each client tag in TAG_CODES that an item carries."""
+    """Add the CDragon code of each client tag in TAG_CODES that an item carries.
+
+    Augments and consumables are skipped: see NOT_ITEMS_OF_THEIR_TAGS.
+    """
     for item in data["items"]:
-        for tag in client_tags[item["apiName"]]:
+        tags = client_tags[item["apiName"]]
+        if any(t.startswith(NOT_ITEMS_OF_THEIR_TAGS) for t in tags):
+            continue
+        for tag in tags:
             code = TAG_CODES.get(tag)
             if code and code not in item["tags"]:
                 item["tags"] = item["tags"] + [code]

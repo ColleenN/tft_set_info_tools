@@ -156,6 +156,19 @@ def test_marks_tactician_and_thief_items(client, tmp_path):
     assert items["DA_Deathblade"]["tags"] == ["Item.Completed"]
 
 
+def test_augments_and_consumables_naming_those_items_are_not_marked(client, tmp_path):
+    write(client, f"{SET}/Augments/DA_BandOfThieves.uasset", build_zen(
+        ["DA_BandOfThieves", "Identifier.Augment.BandOfThieves", "Augment.Tier.Silver",
+         "Item.Equippable.Item.ThiefsGloves"], body=texts(10)))
+    write(client, f"{ITEMS}/Salvager/DA_ScissorSalvager.uasset", build_zen(
+        ["DA_ScissorSalvager", "Identifier.Item.ScissorSalvager", "Item.Equippable.Consumable",
+         "Item.Equippable.Item.Tacticians"], body=texts(7)))
+    convert([client], BUILD, tmp_path / "upload")
+    items = {i["apiName"]: i for i in read_capture(next((tmp_path / "upload").glob("*.json.gz")))["items"]}
+    assert "{218b53a5}" not in items["DA_BandOfThieves"]["tags"]
+    assert "{d304f83b}" not in items["DA_ScissorSalvager"]["tags"]
+
+
 def test_marks_them_on_top_of_the_previous_translation(client, tmp_path):
     add_tactician_and_thief_items(client)
     previous, previous_raw = previous_upload(tmp_path, client)
