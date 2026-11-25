@@ -6,6 +6,11 @@ from enum import Enum
 
 AUGMENT_HASH_MARKER = "{b72bd3bf}"
 
+SET_MECHANIC_ITEM_TAG = "SetMechanicItem"
+"""Marks a set mechanic's equippable item (e.g. Set 19's Bard's Horn) in captures
+built from the client, where CDragon has no code for it yet. Such items are
+equippable without an item type, like Set 7's Shimmerscale items."""
+
 
 class ItemType(Enum):
     """TFT item categories, keyed by the hash tag CDragon uses to mark them."""

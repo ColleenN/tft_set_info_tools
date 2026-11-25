@@ -279,3 +279,10 @@ def test_metatft_schema_is_equippable_item():
     assert not schema.is_equippable_item(
         {"apiName": "DA_SomeConsumable", "tags": ["Item.Consumable"]}
     )
+
+
+def test_cdragon_schema_set_mechanic_item_is_equippable_without_a_type():
+    schema = CDragonSchema()
+    item = {"apiName": "DA_Bard19_UniqueItem", "tags": ["SetMechanicItem"]}
+    assert schema.is_equippable_item(item)
+    assert schema.get_item_types(item) == frozenset()

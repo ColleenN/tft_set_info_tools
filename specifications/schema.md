@@ -43,6 +43,6 @@ Methods:
 
 Concrete Schemas:
 1. `CDragonSchema`: Community Dragon shape (`{"setData": [...], "items": [...]}`, one entry per set, augments living in the shared `items` pool marked with the `AUGMENT_HASH_MARKER` tag).
-   * `get_component()`/`is_equippable_item()` use the legacy CDragon-hash-tag/api-name vocabulary (`_COMPONENT_API_NAMES`, `_EQUIPPABLE_ITEM_HASHES`, `_NON_EQUIPPABLE_ITEM_HASHES`), ported byte-for-byte from the `tft_tools` `seed_gen` package.
+   * `get_component()`/`is_equippable_item()` use the legacy CDragon-hash-tag/api-name vocabulary (`_COMPONENT_API_NAMES`, `_EQUIPPABLE_ITEM_HASHES`, `_NON_EQUIPPABLE_ITEM_HASHES`), ported byte-for-byte from the `tft_tools` `seed_gen` package. `_EQUIPPABLE_ITEM_HASHES` also holds `SET_MECHANIC_ITEM_TAG` (`SetMechanicItem`), which `unreal convert` puts on a set mechanic's items in captures built from the client.
 2. `MetaTFTSchema`: MetaTFT shape (one file per set; `units`/`traits`/`items`/`augments` as separate top-level lists; item category is a readable tag string via `ITEM_TYPE_TAGS`; augment tier is a plain `rarity` field via `AUGMENT_TIER_VALUES`; component api names are mapped via `COMPONENT_API_NAMES`; set number is parsed out of `_metadata.set`, e.g. `"TFTSet18"` → `18`).
    * `ITEM_TYPE_TAGS` only covers item categories observed in a sample response (artifact, emblem, radiant, component) — `get_item_types()` never includes an unmapped `ItemType`, and since `is_equippable_item()` is defined in terms of `get_item_types()`, an item of an unmapped type is also never considered equippable.

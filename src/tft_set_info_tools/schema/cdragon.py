@@ -6,6 +6,7 @@ from tft_set_info_tools.schema.base import SetDataSchema
 from tft_set_info_tools.schema.models import ExtractedSet
 from tft_set_info_tools.schema.vocab import (
     AUGMENT_HASH_MARKER,
+    SET_MECHANIC_ITEM_TAG,
     AugmentTier,
     Component,
     ItemType,
@@ -53,6 +54,7 @@ _EQUIPPABLE_ITEM_HASHES = {
     "{218b53a5}",
     "{a3eeef8b}",
     "{b73b012f}",
+    SET_MECHANIC_ITEM_TAG,
 }
 
 WISP_TAG = "{5b609ae2}"
