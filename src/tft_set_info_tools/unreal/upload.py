@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from tft_set_info_tools.schema.vocab import ItemType
 from tft_set_info_tools.unreal.assets import ExtractedFiles, load_assets, read_strings, scan_recipes
 from tft_set_info_tools.unreal.set_data import build_tft_data, enrich, latest_set, set_entry
 from tft_set_info_tools.unreal.zen import ZenPackage
@@ -26,6 +27,12 @@ logger = logging.getLogger(__name__)
 BUILD_PATTERN = re.compile(r"^[A-Za-z]+-(\d+\.\d+)\.\d+\.(\d+)$")
 MIRROR_TARGET = "manual-pbe-client-extract"
 CHANNEL = "pbe"
+# Client tags that map straight to the CDragon codes items are classified by. These
+# codes are added to an item's tags whatever the rest of its tags translate to.
+TAG_CODES = {
+    "Item.Equippable.Item.Tacticians": ItemType.TAC_ITEM.type_hash,
+    "Item.Equippable.Item.ThiefsGloves": ItemType.TG_ITEM.type_hash,
+}
 UNIQUE_TRAIT_EFFECTS = [{"maxUnits": 25, "minUnits": 1, "style": 6, "variables": {}}]
 
 
@@ -101,6 +108,15 @@ def apply_previous(data: dict[str, Any], previous: dict[str, Any], previous_raw:
         raise ConversionError(f"items new since the previous upload need an items/augments split: {sorted(new)}")
 
 
+def add_tag_codes(data: dict[str, Any], client_tags: dict[str, list[str]]) -> None:
+    """Add the CDragon code of each client tag in TAG_CODES that an item carries."""
+    for item in data["items"]:
+        for tag in client_tags[item["apiName"]]:
+            code = TAG_CODES.get(tag)
+            if code and code not in item["tags"]:
+                item["tags"] = item["tags"] + [code]
+
+
 def finish(data: dict[str, Any], shop: set[str], set_number: int, build: str) -> None:
     """The loader-facing fixes that don't depend on a previous upload."""
     for item in data["items"]:
@@ -163,10 +179,12 @@ def convert(roots: list[str | os.PathLike[str]], build: str, output: str | os.Pa
     counts = enrich(files, data, scan_recipes(files), set_number)
     if raw_output:
         Path(raw_output).write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+    client_tags = {item["apiName"]: list(item["tags"]) for item in data["items"]}
     if previous is not None and previous_raw is not None:
         apply_previous(data, read_json(previous), read_json(previous_raw), set_number)
     else:
         logger.warning("no previous upload given: item tags stay as the client's, and items split by asset kind")
+    add_tag_codes(data, client_tags)
     shop = shop_units(files, set_number)
     finish(data, shop, set_number, build)
     upload = write_upload(data, output, build, set_number, locale)
