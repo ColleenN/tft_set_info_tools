@@ -1,6 +1,7 @@
 import pytest
 
-from tests.unreal_client import SET, build_client, write
+from tests.unreal_builders import build_zen
+from tests.unreal_client import SET, build_client, component_references, texts, write
 from tft_set_info_tools.unreal.assets import (
     ExtractedFiles,
     icon_path,
@@ -112,7 +113,45 @@ def test_sets_entry_is_a_separate_copy(data):
 
 
 def test_recipes(files):
-    assert scan_recipes(files) == {"Identifier.Item.Deathblade": ["BFSword", "BFSword"]}
+    assert scan_recipes(files) == {"DA_Deathblade": ["BFSword", "BFSword"]}
+
+
+def emblem(names_before, identifier):
+    names = names_before + [
+        "/Item_Shared/Item/Component_FryingPan/DA_Component_FryingPan", "DA_Component_FryingPan",
+        "/Item_Shared/Item/Component_TearOfTheGoddess/DA_Component_TearOfTheGoddess", "DA_Component_TearOfTheGoddess",
+        "Item.Equippable.Item.Craftable", "Item.Equippable.Item.Emblem", "IdentifierComponent",
+    ] + ([identifier] if identifier else [])
+    body = texts(9) + component_references(names, "FryingPan", 1) + component_references(names, "TearOfTheGoddess", 1)
+    return build_zen(names, body=body)
+
+
+def test_recipe_reaches_an_item_whose_identifier_uses_another_name(tmp_path):
+    build_client(tmp_path)
+    write(tmp_path, f"{SET}/Traits/Mosher/Emblem/DA_Mosher19_Emblem.uasset",
+          emblem(["DA_Mosher19_Emblem"], "Identifier.Item.SlayerEmblem"))
+    files = ExtractedFiles(tmp_path)
+    data = build_tft_data(load_assets(files, read_strings(files)), 19)
+    enrich(files, data, scan_recipes(files), 19)
+    item = next(i for i in data["items"] if i["apiName"] == "DA_Mosher19_Emblem")
+    assert item["composition"] == ["DA_Component_FryingPan", "DA_Component_TearOfTheGoddess"]
+
+
+def test_item_with_an_empty_identifier_is_typed_by_its_tags(tmp_path):
+    build_client(tmp_path)
+    write(tmp_path, f"{SET}/Traits/Prodigy/Emblem/DA_Prodigy19_Emblem.uasset", emblem(["DA_Prodigy19_Emblem"], None))
+    files = ExtractedFiles(tmp_path)
+    data = build_tft_data(load_assets(files, read_strings(files)), 19)
+    enrich(files, data, scan_recipes(files), 19)
+    item = next(i for i in data["items"] if i["apiName"] == "DA_Prodigy19_Emblem")
+    assert item["composition"] == ["DA_Component_FryingPan", "DA_Component_TearOfTheGoddess"]
+    assert "DA_Prodigy19_Emblem" in set_entry(data, 19)["items"]
+
+
+def test_assets_without_an_identifier_component_stay_untyped(tmp_path):
+    write(tmp_path, f"{SET}/Carousel/Items/DA_19_GlovesFull.uasset",
+          build_zen(["DA_19_GlovesFull", "Item.Equippable.Item.Craftable"]))
+    assert load_assets(ExtractedFiles(tmp_path)) == []
 
 
 def test_enrich(files, data):

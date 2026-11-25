@@ -195,14 +195,6 @@ def read_curve_tables(files: ExtractedFiles, set_number: int) -> dict[str, dict[
     return tables
 
 
-def _item_api_name(identifier: str, api_names: set[str], set_number: int) -> str | None:
-    name = identifier.removesuffix(".uasset").split(".")[-1]
-    for candidate in (name, "DA_" + name, "DA_" + re.sub(r"Emblem$", f"{set_number}_Emblem", name)):
-        if candidate in api_names:
-            return candidate
-    return None
-
-
 def enrich(files: ExtractedFiles, data: dict[str, Any], recipes: dict[str, list[str]],
            set_number: int) -> dict[str, int]:
     """Add curve-table values to the set's champions and traits, and recipes to items.
@@ -248,9 +240,8 @@ def enrich(files: ExtractedFiles, data: dict[str, Any], recipes: dict[str, list[
         for i, effect in enumerate(trait["effects"], 1):
             effect["variables"] = {k: evaluate(v, i) for k, v in table.items()}
     by_api = {item["apiName"]: item for item in data["items"]}
-    for identifier, components in recipes.items():
-        api_name = _item_api_name(identifier, set(by_api), set_number)
-        if len(components) == 2 and api_name:
+    for api_name, components in recipes.items():
+        if len(components) == 2 and api_name in by_api:
             by_api[api_name]["composition"] = ["DA_Component_" + c for c in components]
             counts["recipes"] += 1
     return dict(counts)
