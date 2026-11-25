@@ -122,7 +122,11 @@ def read_recipe(data: bytes) -> list[str]:
 
 
 def scan_recipes(files: ExtractedFiles) -> dict[str, list[str]]:
-    """{item identifier, or file name if it has none: [component, ...]} for items that name components."""
+    """{item api name: [component, ...]} for items that name components.
+
+    Keyed by the asset each recipe is read from, since identifiers can use a
+    trait's display name (`Identifier.Item.SlayerEmblem` in `DA_Mosher19_Emblem`).
+    """
     recipes = {}
     for path in files.find("*/DA_*.uasset"):
         if "/ItemCombinations/" in path or "/DA_Component_" in path:
@@ -134,12 +138,34 @@ def scan_recipes(files: ExtractedFiles) -> dict[str, list[str]]:
             continue
         try:
             recipe = read_recipe(data)
-            identifier = ZenPackage(data).identifier()
         except (struct.error, UnicodeDecodeError, ValueError):
             continue
         if recipe:
-            recipes[identifier or path.rsplit("/", 1)[1]] = recipe
+            recipes[package_path(path).rsplit("/", 1)[1]] = recipe
     return recipes
+
+
+# Data assets carry this component even when its identifier was left empty.
+IDENTIFIER_COMPONENT = "IdentifierComponent"
+
+
+def _kind(identifier: str | None, names: list[str]) -> str | None:
+    """The asset's kind from its `Identifier.<Kind>.<Name>` tag.
+
+    A data asset whose identifier was left empty (Set 19's Prodigy Emblem)
+    is typed by its gameplay tags instead. Augment tags are checked first,
+    since augments can also carry the tags of items they grant.
+    """
+    parts = (identifier or "").split(".")
+    if len(parts) >= 3:
+        return parts[1]
+    if IDENTIFIER_COMPONENT not in names:
+        return None
+    if any(n.startswith("Augment.") for n in names):
+        return "Augment"
+    if any(n.startswith("Item.Equippable.") for n in names):
+        return "Item"
+    return None
 
 
 class TftAsset:
@@ -153,8 +179,7 @@ class TftAsset:
         self.names = zen.names
         self.imports = zen.imported_packages
         self.identifier = zen.identifier()
-        parts = (self.identifier or "").split(".")
-        self.kind = parts[1] if len(parts) >= 3 else None
+        self.kind = _kind(self.identifier, zen.names)
         self.texts = []
         for ref in find_text_references(data):
             text = strings.get(ref.key, ref.namespace) if strings is not None else None
